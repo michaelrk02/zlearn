@@ -1,0 +1,5 @@
+application/cache/
+application/logs
+
+application/zlearn.production.php
+
