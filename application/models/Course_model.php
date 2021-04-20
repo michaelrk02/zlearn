@@ -138,5 +138,22 @@ class Course_model extends CI_Model {
         return $this->db->get()->result_array();
     }
 
+    /*** Course quizzes ***/
+
+    public function count_quizzes($course_id, $filter = '') {
+        return $this->db->select('quiz_id')->from('quizzes')->where('course_id', $course_id)->like('title', $filter)->count_all_results();
+    }
+
+    public function list_quizzes($course_id, $columns = '*', $filter = '', $offset = 0, $limit = NULL) {
+        $this->db->select($columns)->from('quizzes')->where('course_id', $course_id)->like('title', $filter);
+        $this->db->offset($offset);
+        if (isset($limit)) {
+            $this->db->limit($limit);
+        }
+        $this->db->order_by('locked, title', 'ASC');
+
+        return $this->db->get()->result_array();
+    }
+
 }
 

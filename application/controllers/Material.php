@@ -161,7 +161,7 @@ class Material extends CI_Controller {
     protected function ensure_role($role) {
         if ($this->role !== $role) {
             zl_error('You must be a(n) '.$role.' to perform this action');
-            redirect(site_url('course/view').'?id='.urlencode($this->material['course_id']);
+            redirect(site_url('course/view').'?id='.urlencode($this->material['course_id']));
         }
     }
 

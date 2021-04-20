@@ -44,7 +44,7 @@ $choices = ['-- N/A --', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
             <div class="form-text">Whether the quiz is locked for attempts</div>
         </div>
         <div class="my-3">
-            <button type="submit" class="btn btn-success" name="submit" value="1">Configure <span class="fa fa-cog ms-2"></span></button>
+            <button type="submit" class="btn btn-success" name="submit" value="1">Apply <span class="fa fa-save ms-2"></span></button>
         </div>
     </form>
 <?php else: ?>

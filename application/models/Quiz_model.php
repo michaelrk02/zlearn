@@ -35,59 +35,6 @@ class Quiz_model extends CI_Model {
         return $this->db->where('quiz_id', $id)->delete('quizzes') !== FALSE;
     }
 
-    /*** Quiz-user relationship ***/
-
-    public function get_access($quiz_id, $user_id) {
-        $quiz = $this->get_quiz($quiz_id, 'course_id');
-        if (isset($quiz)) {
-            $this->load->model('course_model');
-
-            return $this->course_model->get_role($quiz['course_id'], $user_id);
-        }
-        return NULL;
-    }
-
-    public function count($user_id = NULL, $course_id = NULL, $filter = '') {
-        $this->db->select('quiz_id')->from('quizzes');
-        if (isset($course_id)) {
-            $this->db->where('course_id', $course_id);
-        }
-        if (isset($user_id)) {
-            $this->db->group_start();
-            $this->db->where('locked', 0);
-            $this->db->or_group_start();
-            $this->db->where('locked', 1);
-            $this->db->where('NOT EXISTS(SELECT user_id FROM '.$this->db->dbprefix('quiz_responses').' WHERE user_id = '.$this->db->escape($user_id).')', NULL, FALSE);
-            $this->db->group_end();
-            $this->db->group_end();
-        }
-        $this->db->like('title', $filter);
-        return $this->db->count_all_results();
-    }
-
-    public function list($user_id = NULL, $columns = '*', $course_id = NULL, $filter = '', $offset = 0, $limit = NULL) {
-        $this->db->select($columns)->from('quizzes');
-        if (isset($course_id)) {
-            $this->db->where('course_id', $course_id);
-        }
-        if (isset($user_id)) {
-            $this->db->group_start();
-            $this->db->where('locked', 0);
-            $this->db->or_group_start();
-            $this->db->where('locked', 1);
-            $this->db->where('NOT EXISTS(SELECT user_id FROM '.$this->db->dbprefix('quiz_responses').' WHERE user_id = '.$this->db->escape($user_id).')', NULL, FALSE);
-            $this->db->group_end();
-            $this->db->group_end();
-        }
-        $this->db->like('title', $filter);
-        $this->db->order_by('title');
-        $this->db->offset($offset);
-        if (isset($limit)) {
-            $this->db->limit($limit);
-        }
-        return $this->db->get()->result_array();
-    }
-
     /*** Quiz responses ***/
 
     public function init_response($id, $user_id, $essay, $num_questions) {

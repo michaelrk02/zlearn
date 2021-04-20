@@ -81,6 +81,25 @@ class Course extends CI_Controller {
             $data['page'] = $page;
             $data['max_page'] = $max_page;
             $data['display'] = $display;
+        } elseif ($tab === 'quizzes') {
+            $filter = $this->input->get('filter');
+            $filter = isset($filter) ? $filter : '';
+
+            $display = $this->input->get('display');
+            $display = isset($display) && is_numeric($display) ? max(1, (int)$display) : 25;
+
+            $max_page = max(1, ceil($this->courses->count_quizzes($this->id, $filter) / $display));
+
+            $page = $this->input->get('page');
+            $page = isset($page) && is_numeric($page) ? max(1, min($max_page, (int)$page)) : 1;
+
+            $data['id'] = $this->id;
+            $data['role'] = $this->role;
+            $data['quizzes'] = $this->courses->list_quizzes($this->id, 'quiz_id, title, num_questions, essay, locked', $filter, ($page - 1) * $display, $display);
+            $data['filter'] = $filter;
+            $data['page'] = $page;
+            $data['max_page'] = $max_page;
+            $data['display'] = $display;
         } elseif ($tab === 'members') {
             $data['id'] = $this->id;
             $data['members'] = $this->courses->list_course_members($this->id, ZL_DB_PREFIX.'course_members.user_id AS user_id, name, instructor');
