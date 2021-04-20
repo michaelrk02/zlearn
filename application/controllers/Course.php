@@ -126,6 +126,30 @@ class Course extends CI_Controller {
         $this->load->view('footer');
     }
 
+    public function leave() {
+        $this->ensure_management(FALSE);
+
+        $this->init_course('title, allow_leave');
+
+        if ($this->courses->get_role($this->id, $this->user_id) !== NULL) {
+            if (!empty($this->course['allow_leave'])) {
+                if ($this->courses->remove_member($this->id, $this->user_id)) {
+                    zl_success('Successfully left from <b>'.htmlspecialchars($this->course['title']).'</b>');
+                    redirect('course/list');
+                } else {
+                    zl_error('Failed to leave this course');
+                    redirect(site_url('course/view').'?id='.urlencode($this->id));
+                }
+            } else {
+                zl_error('You cannot leave from this course');
+                redirect(site_url('course/view').'?id='.urlencode($this->id));
+            }
+        } else {
+            zl_error('You are not a member of this course');
+            redirect('course/list');
+        }
+    }
+
     public function create() {
         $this->ensure_management();
 
@@ -273,6 +297,10 @@ class Course extends CI_Controller {
         }
 
         $this->role = $this->courses->get_role($this->id, $this->user_id);
+        if (!isset($this->role)) {
+            zl_error('You have no access to this course');
+            redirect('course/list');
+        }
     }
 
     protected function init_course_manager(&$form_validation) {
@@ -297,9 +325,9 @@ class Course extends CI_Controller {
         }
     }
 
-    protected function ensure_management() {
-        if (empty($this->auth->user['allow_course_management'])) {
-            zl_error('You can not add, remove, or edit a course. Contact admin if you think this is a mistake');
+    protected function ensure_management($manager = TRUE) {
+        if (empty($this->auth->user['allow_course_management']) === $manager) {
+            zl_error('You must '.(!$manager ? 'not ' : '').'be a manager to perform this action');
             redirect(site_url('course/list'));
         }
     }

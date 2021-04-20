@@ -48,6 +48,9 @@ class Auth {
         zl_session_set('user_id', NULL);
         zl_session_set('name', NULL);
         zl_session_set('sso', NULL);
+        zl_session_set('incomplete', NULL);
+        zl_session_set('tmp_name', NULL);
+        zl_session_set('tmp_email', NULL);
     }
 
     public function id() {
@@ -64,8 +67,9 @@ class Auth {
         }
         $redirect = site_url($redirect);
 
-        $signature = hash_hmac('sha256', ZL_SSO_APP_ID, ZL_SSO_APP_SECRET);
-        return ZL_SSO_URL.'?app_id='.urlencode(ZL_SSO_APP_ID).'&signature='.urlencode($signature).'&redirect='.urlencode($redirect).'&param='.urlencode($param);
+        $timestamp = time();
+        $signature = hash_hmac('sha256', ZL_SSO_APP_ID.':'.$timestamp, ZL_SSO_APP_SECRET);
+        return ZL_SSO_URL.'?app_id='.urlencode(ZL_SSO_APP_ID).'&timestamp='.urlencode($timestamp).'&signature='.urlencode($signature).'&redirect='.urlencode($redirect).'&param='.urlencode($param);
     }
 
 }

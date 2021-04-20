@@ -24,13 +24,8 @@ class Authentication extends CI_Controller {
             }
         }
 
-        $sso_url = '';
-        if (ZL_SSO_ENABLE) {
-            $sso_url = $this->auth->sso_url('authentication/sso_login');
-        }
-
         $this->load->view('header', ['title' => 'Login']);
-        $this->load->view('authentication/login', ['sso_url' => $sso_url]);
+        $this->load->view('authentication/login');
         $this->load->view('footer');
     }
 

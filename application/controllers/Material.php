@@ -58,7 +58,7 @@ class Material extends CI_Controller {
                             $this->material['timestamp'] = time();
 
                             if (($id = $this->materials->add($this->material)) !== NULL) {
-                                zl_success('Material <b>'.$this->material['title'].'</b> added successfully to <b>'.$course['title'].'</b> course');
+                                zl_success('Material <b>'.htmlspecialchars($this->material['title']).'</b> added successfully to <b>'.$course['title'].'</b> course');
                                 redirect(site_url('material/view').'?id='.urlencode($id));
                             } else {
                                 zl_error('Failed to create material');
@@ -139,11 +139,15 @@ class Material extends CI_Controller {
         }
 
         // must include `course_id` column or error otherwise
-        $this->role = $this->courses->get_role($this->material['course_id'], $this->user_id);
-
         $this->course = $this->courses->get($this->material['course_id'], 'title');
         if ($this->course === NULL) {
             zl_error('Invalid course');
+            redirect('course/list');
+        }
+
+        $this->role = $this->courses->get_role($this->material['course_id'], $this->user_id);
+        if (!isset($this->role)) {
+            zl_error('You have no access to view this material');
             redirect('course/list');
         }
     }
@@ -157,7 +161,7 @@ class Material extends CI_Controller {
     protected function ensure_role($role) {
         if ($this->role !== $role) {
             zl_error('You must be a(n) '.$role.' to perform this action');
-            redirect(site_url('course/view').'?id='.$this->material['course_id']);
+            redirect(site_url('course/view').'?id='.urlencode($this->material['course_id']);
         }
     }
 

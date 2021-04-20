@@ -23,7 +23,7 @@
                 <?php if (ZL_SSO_ENABLE): ?>
                     <p class="text-center">- OR -</p>
                     <div class="d-grid">
-                        <a class="btn btn-danger btn-lg" href="<?php echo $sso_url; ?>">Login with <?php echo ZL_SSO_NAME; ?> <span class="fa fa-key ms-2"></span></a>
+                        <a class="btn btn-danger btn-lg" href="<?php echo site_url('authentication/sso_login'); ?>">Login with <?php echo ZL_SSO_NAME; ?> <span class="fa fa-key ms-2"></span></a>
                     </div>
                     <div class="form-text">If you have a(n) <a target="_blank" href="<?php echo ZL_SSO_HOME; ?>"><?php echo ZL_SSO_NAME; ?></a> account, login using this method instead</div>
                 <?php endif; ?>

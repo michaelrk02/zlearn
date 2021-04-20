@@ -14,6 +14,8 @@ define('ZL_DB_PREFIX', 'zl_');
 
 define('ZL_SESS_PREFIX', 'zl_');
 
+define('ZL_SECRET_KEY', 'IO76qm7Ujr3qD2jWRLT9SiOO8IiJyQmw0RfXdJlXrAv6a4p08GHVVaVa4knAw4bw');
+
 define('ZL_SSO_ENABLE', TRUE);
 define('ZL_SSO_NAME', 'P!NGFEST');
 define('ZL_SSO_HOME', 'http://localhost/~michael/pingfest/sso/');
