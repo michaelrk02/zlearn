@@ -25,14 +25,17 @@ class Quiz extends CI_Controller {
     }
 
     public function view() {
-        $this->init_quiz('course_id, title, description, num_questions, essay, mc_score_correct, mc_score_incorrect, mc_score_empty, show_grades, show_leaderboard, locked');
+        $this->init_quiz('course_id, title, description, duration, num_questions, essay, mc_score_correct, mc_score_incorrect, mc_score_empty, show_grades, show_leaderboard, locked');
 
         $attempt = NULL;
 
         if ($this->role === 'participant') {
-            $response = $this->quizzes->get_response($this->id, $this->user_id);
-            if (isset($response)) {
+            $info = $this->quizzes->get_response_info($this->id, $this->user_id, 'timestamp, data, score');
+            if (isset($info)) {
+                $response = $this->quizzes->unserialize_response_data($info['data']);
                 $attempt = [];
+                $attempt['timestamp'] = $info['timestamp'];
+                $attempt['score'] = $info['score'];
                 $attempt['answered'] = 0;
                 for ($i = 1; $i <= $this->quiz['num_questions']; $i++) {
                     if (!empty($response['data'][$i])) {
@@ -48,27 +51,38 @@ class Quiz extends CI_Controller {
     }
 
     public function attempt() {
-        $this->init_quiz('course_id, title, num_questions, questions_link, essay, mc_num_choices, locked');
+        $this->init_quiz('course_id, title, duration, num_questions, essay, mc_num_choices, locked, hash');
         $this->ensure_role('participant');
 
-        if (empty($this->quiz['locked'])) {
-            if ($this->quizzes->init_response($this->id, $this->user_id, !empty($this->quiz['essay']), $this->quiz['num_questions'])) {
-                $token = [];
-                $token[0] = ['user_id' => $this->user_id, 'expired' => time() + 86400];
-                $token[0] = base64_encode(serialize($token[0]));
-                $token[1] = hash_hmac('sha256', $token[0], ZL_SECRET_KEY);
-                $token = implode(':', $token);
-                $token = base64_encode($token);
+        $grant = FALSE;
+        $info = $this->quizzes->get_response_info($this->id, $this->user_id, 'timestamp');
+        if (isset($info)) {
+            if ((($this->quiz['duration'] == 0) && empty($this->quiz['locked'])) || (($this->quiz['duration'] > 0) && (time() <= $info['timestamp'] + $this->quiz['duration'] * 60))) {
+                $grant = TRUE;
+            }
+        } else {
+            if (empty($this->quiz['locked'])) {
+                $grant = TRUE;
+            }
+        }
+
+        if ($grant) {
+            $timestamp = isset($info) ? $info['timestamp'] : time();
+            if ($this->quizzes->init_response($this->id, $this->user_id, !empty($this->quiz['essay']), $this->quiz['num_questions'], $timestamp)) {
+                $token = $this->auth->create_token(['user_id' => $this->user_id, 'hash' => $this->quiz['hash']], 86400);
+
+                $pdf_token = $this->auth->create_token(['quiz_id' => $this->id], 10);
+                $pdf_url = site_url('quiz/pdf').'?token='.urlencode($pdf_token);
 
                 $this->load->view('header', ['title' => htmlspecialchars($this->quiz['title']).' - Quiz Attempt']);
-                $this->load->view('quiz/attempt', ['id' => $this->id, 'quiz' => $this->quiz, 'course' => $this->course, 'token' => $token]);
+                $this->load->view('quiz/attempt', ['id' => $this->id, 'quiz' => $this->quiz, 'course' => $this->course, 'token' => $token, 'timestamp' => $timestamp, 'pdf_url' => $pdf_url]);
                 $this->load->view('footer');
             } else {
-                zl_error('Unable to initialize responses');
+                zl_error('Unable to initialize the quiz response. Contact admin if you think this is a mistake');
                 redirect(site_url('quiz/view').'?id='.urlencode($this->id));
             }
         } else {
-            zl_error('The quiz is locked at this time');
+            zl_error('Access to this quiz has been denied');
             redirect(site_url('quiz/view').'?id='.urlencode($this->id));
         }
     }
@@ -84,8 +98,9 @@ class Quiz extends CI_Controller {
                     $this->quiz = [];
                     $this->quiz['title'] = '';
                     $this->quiz['description'] = '';
+                    $this->quiz['duration'] = 0;
                     $this->quiz['num_questions'] = 0;
-                    $this->quiz['questions_link'] = '';
+                    $this->quiz['questions_hash'] = '';
                     $this->quiz['essay'] = 0;
                     $this->quiz['mc_num_choices'] = 2;
                     $this->quiz['show_grades'] = 0;
@@ -100,8 +115,9 @@ class Quiz extends CI_Controller {
                             $this->quiz['course_id'] = $course_id;
                             $this->quiz['title'] = $this->input->post('title');
                             $this->quiz['description'] = $this->input->post('description');
+                            $this->quiz['duration'] = $this->input->post('duration');
                             $this->quiz['num_questions'] = $this->input->post('num_questions');
-                            $this->quiz['questions_link'] = $this->input->post('questions_link');
+                            $this->quiz['questions_hash'] = '';
                             $this->quiz['essay'] = (int)!empty($this->input->post('essay'));
                             $this->quiz['mc_num_choices'] = $this->input->post('mc_num_choices');
                             $this->quiz['mc_score_correct'] = 1.0;
@@ -118,9 +134,17 @@ class Quiz extends CI_Controller {
                             $this->quiz['show_leaderboard'] = (int)!empty($this->input->post('show_leaderboard'));
                             $this->quiz['locked'] = 1;
 
-                            if (($id = $this->quizzes->add($this->quiz)) !== NULL) {
-                                zl_success('Quiz <b>'.htmlspecialchars($this->quiz['title']).'</b> added successfully to <b>'.$course['title'].'</b> course');
-                                redirect(site_url('quiz/view').'?id='.urlencode($id));
+                            if ((($this->id = $this->quizzes->add($this->quiz)) !== NULL) && $this->quizzes->rehash($this->id)) {
+                                if (($pdf_hash = $this->upload_pdf_file()) !== FALSE) {
+                                    if ($this->quizzes->set($this->id, ['questions_hash' => $pdf_hash]) && $this->quizzes->rehash($this->id)) {
+                                        zl_success('Quiz <b>'.htmlspecialchars($this->quiz['title']).'</b> added successfully to <b>'.$course['title'].'</b> course');
+                                        redirect(site_url('quiz/view').'?id='.urlencode($this->id));
+                                    } else {
+                                        zl_error('Failed updating the PDF file. Please try again later');
+                                    }
+                                } else {
+                                    zl_error('Failed uploading the PDF file. Please try again later');
+                                }
                             } else {
                                 zl_error('Failed to create quiz');
                             }
@@ -130,8 +154,8 @@ class Quiz extends CI_Controller {
 
                         $this->quiz['title'] = set_value('title');
                         $this->quiz['description'] = set_value('description');
+                        $this->quiz['duration'] = set_value('duration');
                         $this->quiz['num_questions'] = set_value('num_questions');
-                        $this->quiz['questions_link'] = set_value('questions_link');
                         $this->quiz['essay'] = !empty(set_value('essay'));
                         $this->quiz['mc_num_choices'] = set_value('mc_num_choices');
                         $this->quiz['show_grades'] = !empty(set_value('show_grades'));
@@ -158,7 +182,7 @@ class Quiz extends CI_Controller {
     }
 
     public function edit() {
-        $this->init_quiz('course_id, title, description, num_questions, questions_link, essay, mc_num_choices, mc_answers, show_grades, show_leaderboard');
+        $this->init_quiz('course_id, title, description, duration, num_questions, questions_hash, essay, mc_num_choices, mc_answers, show_grades, show_leaderboard');
         $this->ensure_role('instructor');
 
         if (!empty($this->input->post('submit'))) {
@@ -170,7 +194,7 @@ class Quiz extends CI_Controller {
                 $this->quiz['title'] = $this->input->post('title');
                 $this->quiz['description'] = $this->input->post('description');
                 $this->quiz['num_questions'] = $this->input->post('num_questions');
-                $this->quiz['questions_link'] = $this->input->post('questions_link');
+                $this->quiz['duration'] = $this->input->post('duration');
                 $this->quiz['essay'] = !empty($this->input->post('essay'));
                 $this->quiz['mc_num_choices'] = $this->input->post('mc_num_choices');
                 $this->quiz['show_grades'] = !empty($this->input->post('show_grades'));
@@ -184,11 +208,19 @@ class Quiz extends CI_Controller {
                 }
                 $this->quiz['mc_answers'] = serialize($this->quiz['mc_answers']);
 
-                if ($this->quizzes->set($this->id, $this->quiz)) {
-                    zl_success('Quiz updated successfully');
-                    redirect(site_url('quiz/view').'?id='.urlencode($this->id));
+                if ($this->quizzes->set($this->id, $this->quiz) && $this->quizzes->rehash($this->id)) {
+                    if (($pdf_hash = $this->upload_pdf_file()) !== FALSE) {
+                        if ($this->quizzes->set($this->id, ['questions_hash' => $pdf_hash]) && $this->quizzes->rehash($this->id)) {
+                            zl_success('Quiz updated successfully');
+                            redirect(site_url('quiz/view').'?id='.urlencode($this->id));
+                        } else {
+                            zl_error('Failed updating the PDF file. Please try again later');
+                        }
+                    } else {
+                        zl_error('Failed uploading the PDF file. Please try again later');
+                    }
                 } else {
-                    zl_error('Failed to update the quiz');
+                    zl_error('Failed updating the quiz');
                 }
             } else {
                 zl_error($this->form_validation->error_string());
@@ -196,8 +228,8 @@ class Quiz extends CI_Controller {
 
             $this->quiz['title'] = set_value('title');
             $this->quiz['description'] = set_value('description');
+            $this->quiz['duration'] = set_value('duration');
             $this->quiz['num_questions'] = set_value('num_questions');
-            $this->quiz['questions_link'] = set_value('questions_link');
             $this->quiz['essay'] = !empty(set_value('essay'));
             $this->quiz['mc_num_choices'] = set_value('mc_num_choices');
             $this->quiz['show_grades'] = !empty(set_value('show_grades'));
@@ -263,6 +295,47 @@ class Quiz extends CI_Controller {
     }
 
     public function delete() {
+        $this->init_quiz('course_id, title');
+        $this->ensure_role('instructor');
+
+        if ($this->quizzes->remove($this->id)) {
+            if ($this->storage->remove('quiz/'.$this->id)) {
+                zl_success('Successfully removed quiz: '.$this->quiz['title']);
+                redirect(site_url('course/view').'?id='.urlencode($this->quiz['course_id']));
+            } else {
+                zl_error('Failed to remove quiz files');
+            }
+        } else {
+            zl_error('Failed to remove quiz: '.$this->quiz['title']);
+        }
+        redirect(site_url('quiz/view').'?id='.urlencode($this->id));
+    }
+
+    public function viewpdf() {
+        $this->init_quiz('course_id');
+        $this->ensure_role('instructor');
+
+        $pdf_token = $this->auth->create_token(['quiz_id' => $this->id], 10);
+        $pdf_url = site_url('quiz/pdf').'?token='.urlencode($pdf_token);
+
+        redirect(site_url('plugins/pdf_viewer').'?src='.urlencode($pdf_url));
+    }
+
+    public function pdf() {
+        $token = $this->input->get('token');
+        $token = $this->auth->extract_token($token, ['quiz_id']);
+        if (isset($token)) {
+            $resource = $this->storage->get('quiz/'.$token['quiz_id']);
+            if (isset($resource) && !empty($resource['metadata']['type'])) {
+                $this->output->set_status_header(200);
+                $this->output->set_content_type($resource['metadata']['type']);
+                $this->output->set_output($resource['contents']);
+            } else {
+                $this->output->set_status_header(404);
+            }
+        } else {
+            $this->output->set_status_header(403);
+        }
     }
 
     protected function init_quiz($columns = '*') {
@@ -291,8 +364,8 @@ class Quiz extends CI_Controller {
     protected function init_quiz_manager(&$form_validation) {
         $form_validation->set_rules('title', 'Title', 'required|max_length[100]');
         $form_validation->set_rules('description', 'Description', 'required|max_length[1000]');
-        $form_validation->set_rules('num_questions', 'Number of questions', 'required|is_natural');
-        $form_validation->set_rules('questions_link', 'Questions link', 'required|max_length[1000]');
+        $form_validation->set_rules('duration', 'Duration', 'required|is_natural');
+        $form_validation->set_rules('num_questions', 'Number of questions', 'required|is_natural_no_zero');
         $form_validation->set_rules('mc_num_choices', 'Number of multiple choices', 'required|integer|greater_than_equal_to[2]|less_than_equal_to[10]');
     }
 
@@ -307,6 +380,22 @@ class Quiz extends CI_Controller {
             zl_error('You must be a(n) '.$role.' to perform this action');
             redirect(site_url('quiz/view').'?id='.urlencode($this->id));
         }
+    }
+
+    protected function upload_pdf_file() {
+        $blob_path = $this->storage->blob_path('quiz/'.$this->id);
+
+        if ($_FILES['questions_pdf']['size'] > 0) {
+            if ($_FILES['questions_pdf']['size'] <= 10485760) {
+                $contents = file_get_contents($_FILES['questions_pdf']['tmp_name']);
+                $metadata = ['type' => mime_content_type($_FILES['questions_pdf']['tmp_name'])];
+                if (($metadata['type'] === 'application/pdf') && $this->storage->put('quiz/'.$this->id, $contents, $metadata)) {
+                    return is_readable($blob_path) ? hash_file('md5', $blob_path) : FALSE;
+                }
+            }
+            return FALSE;
+        }
+        return is_readable($blob_path) ? hash_file('md5', $blob_path) : FALSE;
     }
 
 }

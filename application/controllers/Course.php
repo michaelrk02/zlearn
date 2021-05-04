@@ -95,7 +95,7 @@ class Course extends CI_Controller {
 
             $data['id'] = $this->id;
             $data['role'] = $this->role;
-            $data['quizzes'] = $this->courses->list_quizzes($this->id, 'quiz_id, title, num_questions, essay, locked', $filter, ($page - 1) * $display, $display);
+            $data['quizzes'] = $this->courses->list_quizzes($this->id, 'quiz_id, title, duration, num_questions, essay, locked', $filter, ($page - 1) * $display, $display);
             $data['filter'] = $filter;
             $data['page'] = $page;
             $data['max_page'] = $max_page;

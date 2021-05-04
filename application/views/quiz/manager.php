@@ -5,7 +5,7 @@
     <h5><?php echo $quiz['title']; ?></h5>
 <?php endif; ?>
 <?php echo zl_status(); ?>
-<?php echo form_open(($action === 'create') ? site_url('quiz/create').'?course_id='.urlencode($quiz['course_id']) : site_url('quiz/edit').'?id='.urlencode($id), 'onsubmit="return confirm(\'Are you sure?\')"'); ?>
+<?php echo form_open_multipart(($action === 'create') ? site_url('quiz/create').'?course_id='.urlencode($quiz['course_id']) : site_url('quiz/edit').'?id='.urlencode($id), 'onsubmit="return confirm(\'Are you sure?\')"'); ?>
     <div class="my-3">Course: <b><?php echo htmlspecialchars($course['title']); ?></b> <span class="text-muted font-monospace">[<?php echo $quiz['course_id']; ?>]</span></div>
     <?php if ($action === 'edit'): ?>
         <div class="my-3">Quiz ID: <code><?php echo $id; ?></code></div>
@@ -21,13 +21,19 @@
         <div class="form-text">Enter up to 1000 characters. Markdown formatted</div>
     </div>
     <div class="my-3">
+        <label class="form-label">Duration (minutes) <span class="text-danger">*</span></label>
+        <input type="number" class="form-control" name="duration" placeholder="Quiz duration in minutes" value="<?php echo htmlspecialchars($quiz['duration']); ?>">
+        <div class="form-text">Enter 0 for limitless duration</div>
+    </div>
+    <div class="my-3">
         <label class="form-label">Number of questions <span class="text-danger">*</span></label>
         <input type="number" class="form-control" name="num_questions" placeholder="Number of quiz questions" value="<?php echo htmlspecialchars($quiz['num_questions']); ?>">
     </div>
     <div class="my-3">
-        <label class="form-label">Questions link <span class="text-danger">*</span></label>
-        <input type="text" class="form-control" name="questions_link" placeholder="Link to quiz questions" value="<?php echo htmlspecialchars($quiz['questions_link']); ?>">
-        <div class="form-text">e.g. https://mysite.com/questions.pdf</div>
+        <label class="form-label">Questions PDF <span class="text-danger">*</span></label>
+        <div class="alert alert-info">Status: <?php if (!empty($quiz['questions_hash'])): ?><b>UPLOADED</b> <span class="text-muted font-monospace">[hash: <?php echo $quiz['questions_hash']; ?>]</span> <a class="mx-1" target="_blank" href="<?php echo site_url('quiz/viewpdf').'?id='.urlencode($id); ?>">View</a><?php else: ?><b>NOT UPLOADED</b><?php endif; ?></div>
+        <input type="file" class="form-control" name="questions_pdf">
+        <div class="form-text">Upload questions file with PDF format</div>
     </div>
     <div class="my-3">
         <div class="form-check">

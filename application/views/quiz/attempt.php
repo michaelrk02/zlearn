@@ -7,13 +7,16 @@ $choices = [NULL, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 <h1><?php echo htmlspecialchars($quiz['title']); ?></h1>
 <p><a target="_blank" href="<?php echo site_url('quiz/view').'?id='.urlencode($id); ?>">View quiz information</a></p>
 <div class="mb-3">
-    <iframe src="<?php echo site_url('plugins/pdf_viewer').'?src='.urlencode($quiz['questions_link']); ?>" width="90%" height="600"></iframe>
+    <iframe src="<?php echo site_url('plugins/pdf_viewer').'?src='.urlencode($pdf_url); ?>" width="90%" height="600"></iframe>
 </div>
+    <div id="timer" class="alert alert-info">
+        Time remaining : <span id="time-remaining" class="fw-bold"></span>
+    </div>
+    <h3>Question #<span class="zl-question-no">#</span></h3>
+    <div class="spinner-border mb-2" id="loading"></div>
 <?php if (!empty($quiz['essay'])): ?>
     <h5><span class="zl-question-no">#</span>. Write down your answer for question number <span class="zl-question-no">#</span> in the textbox below</h5>
 <?php else: ?>
-    <h3>Question #<span class="zl-question-no">#</span></h3>
-    <div class="spinner-border mb-2" id="loading"></div>
     <p>Select one of the following options based on the question number <span class="zl-question-no">#</span> above</p>
     <div>
         <div class="row">
@@ -68,6 +71,9 @@ var currentQuestionNo;
 var essay = <?php echo !empty($quiz['essay']) ? 'true' : 'false'; ?>;
 
 var numChoices;
+
+var timeRemaining;
+var deadline;
 
 function navigate(questionNo) {
     if ((1 <= questionNo) && (questionNo <= numQuestions)) {
@@ -195,7 +201,32 @@ $(document).ready(function() {
     }
 
     navigate(1);
+
+    var duration = <?php echo $quiz['duration'] * 60; ?>;
+    $('#timer').hide();
+    if (duration != 0) {
+        var timestamp = <?php echo $timestamp; ?>;
+        deadline = timestamp + duration;
+        $('#timer').show();
+        timeRemaining = $('#time-remaining');
+
+        updateTimer();
+        setInterval(updateTimer, 1000);
+    }
 });
+
+function updateTimer() {
+    var now = Math.floor(Date.now() / 1000);
+    var remaining = Math.max(0, deadline - now);
+
+    var hours = Math.floor(remaining / 3600);
+    var minutes = Math.floor(remaining / 60) % 60;
+    var seconds = remaining % 60;
+
+    var text = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+
+    timeRemaining.text(text);
+}
 
 </script>
 

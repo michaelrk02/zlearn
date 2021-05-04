@@ -3,7 +3,8 @@ defined('BASEPATH') OR exit;
 
 class Quiz_attempt extends CI_Controller {
 
-    protected $user_id;
+    protected $user_id = NULL;
+    protected $hash = '';
     protected $quiz_id;
     protected $quiz;
     protected $role;
@@ -22,20 +23,31 @@ class Quiz_attempt extends CI_Controller {
             exit;
         }
 
-        $this->quiz = $this->quizzes->get($this->quiz_id, 'course_id, locked');
+        $this->quiz = $this->quizzes->get($this->quiz_id, 'course_id, duration, locked, hash');
         if (!isset($this->quiz)) {
             $this->output->set_status_header(404, 'Quiz not found');
             exit;
         }
 
-        if (!empty($this->quiz['locked'])) {
+        if (!empty($this->quiz['locked']) && ($this->quiz['duration'] == 0)) {
             $this->output->set_status_header(403, 'This quiz has been locked by the instructor. Please refresh the page');
             exit;
         }
 
-        $this->user_id = $this->authorize_attempt();
+        $this->authorize_attempt();
         if (!isset($this->user_id)) {
             $this->output->set_status_header(403, 'Invalid authorization token. Try refreshing the page');
+            exit;
+        }
+
+        if ($this->hash !== $this->quiz['hash']) {
+            $this->output->set_status_header(412, 'The quiz contents has been changed. Please refresh the page');
+            exit;
+        }
+
+        $info = $this->quizzes->get_response_info($this->quiz_id, $this->user_id, 'timestamp');
+        if (($this->quiz['duration'] != 0) && (time() > $info['timestamp'] + $this->quiz['duration'] * 60)) {
+            $this->output->set_status_header(403, 'The quiz is over. Thank you for participating and please refresh the page');
             exit;
         }
 
@@ -83,18 +95,11 @@ class Quiz_attempt extends CI_Controller {
 
     protected function authorize_attempt() {
         $token = $this->input->get_request_header('X-ZLEARN-Attempt-Token');
-        if (!empty($token)) {
-            $token = base64_decode($token);
-            $token = explode(':', $token);
-            if (hash_hmac('sha256', $token[0], ZL_SECRET_KEY) === $token[1]) {
-                $token[0] = base64_decode($token[0]);
-                $token[0] = unserialize($token[0]);
-                if (time() < $token[0]['expired']) {
-                    return $token[0]['user_id'];
-                }
-            }
+        $token = $this->auth->extract_token($token, ['user_id', 'hash']);
+        if (isset($token)) {
+            $this->user_id = $token['user_id'];
+            $this->hash = $token['hash'];
         }
-        return NULL;
     }
 
     protected function respond() {

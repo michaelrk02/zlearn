@@ -1,5 +1,11 @@
-application/cache/
-application/logs
+application/cache/*
+!application/cache/index.html
+
+application/logs/*
+!application/logs/index.html
+
+application/storage/*
+!application/storage/index.html
 
 application/zlearn.production.php
 

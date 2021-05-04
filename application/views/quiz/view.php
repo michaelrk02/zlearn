@@ -12,6 +12,7 @@
 <p id="description"><?php echo htmlspecialchars($quiz['description']); ?></p>
 <h3>Technical Specifications</h3>
 <ul>
+    <li>Duration: <b><?php echo $quiz['duration'] == 0 ? 'unlimited' : $quiz['duration'].' minutes' ?></b></li>
     <li>Number of questions: <b><?php echo $quiz['num_questions']; ?></b></li>
     <li>Type: <b><?php echo !empty($quiz['essay']) ? 'essay' : 'multiple choice'; ?></b></li>
     <li>Show grades: <b><?php echo !empty($quiz['show_grades']) ? 'yes' : 'no'; ?></b></li>
@@ -22,15 +23,17 @@
     <?php if (!empty($quiz['essay'])): ?>
         <li>Your response will be manually graded by our instructors</li>
     <?php else: ?>
-        <li>Correct score: <b><?php echo $quiz['mc_score_correct']; ?></b></li>
-        <li>Incorrect score: <b><?php echo $quiz['mc_score_incorrect']; ?></b></li>
-        <li>Empty score: <b><?php echo $quiz['mc_score_empty']; ?></b></li>
-        <li>Minimum score: <b><?php echo min($quiz['mc_score_correct'], $quiz['mc_score_incorrect'], $quiz['mc_score_empty']) * $quiz['num_questions']; ?></b></li>
-        <li>Maximum score: <b><?php echo max($quiz['mc_score_correct'], $quiz['mc_score_incorrect'], $quiz['mc_score_empty']) * $quiz['num_questions']; ?></b></li>
+        <li>Score if correct: <b><?php echo $quiz['mc_score_correct']; ?></b></li>
+        <li>Score if incorrect: <b><?php echo $quiz['mc_score_incorrect']; ?></b></li>
+        <li>Score if empty: <b><?php echo $quiz['mc_score_empty']; ?></b></li>
+        <li>Minimum grade: <b><?php echo min($quiz['mc_score_correct'], $quiz['mc_score_incorrect'], $quiz['mc_score_empty']) * $quiz['num_questions']; ?></b></li>
+        <li>Maximum grade: <b><?php echo max($quiz['mc_score_correct'], $quiz['mc_score_incorrect'], $quiz['mc_score_empty']) * $quiz['num_questions']; ?></b></li>
     <?php endif; ?>
 </ul>
 <?php if (($role === 'participant') && empty($quiz['locked']) && isset($attempt)): ?>
-    <p>Current attempt: <b><?php echo $attempt['answered']; ?></b> out of <?php echo $quiz['num_questions']; ?> questions have been answered</p>
+    <h3>Last Attempt</h3>
+    <div class="my-1"><b><?php echo $attempt['answered']; ?></b> out of <?php echo $quiz['num_questions']; ?> questions have been answered</div>
+    <div class="my-1">Started on <span id="timestamp"><?php echo $attempt['timestamp']; ?></span></div>
 <?php endif; ?>
 <div class="my-3">
     <?php if (($role === 'participant') && empty($quiz['locked'])): ?>
@@ -42,5 +45,12 @@
 $(document).ready(function() {
     var description = $('#description');
     description.html(marked(description.text()));
+
+    var timestamp = $('#timestamp');
+    if (timestamp.length != 0) {
+        timestamp.text(function(index, timestamp) {
+            return (new Date(parseInt(timestamp) * 1000)).toString();
+        });
+    }
 });
 </script>

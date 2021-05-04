@@ -43,9 +43,10 @@
         <div class="card my-3">
             <div class="card-body">
                 <h5 class="card-title"><?php echo htmlspecialchars($quiz['title']); ?> <?php if (!empty($quiz['locked'])): ?><span class="badge bg-secondary">LOCKED</span><?php endif; ?></h5>
-                <div class="card-text">
-                    <div class="my-2">Type: <b><?php echo !empty($quiz['essay']) ? 'essay' : 'multiple choice'; ?></b></div>
-                    <div class="my-2">Number of questions: <b><?php echo $quiz['num_questions']; ?></b></div>
+                <div class="card-text py-2">
+                    <div class="my-1">Type: <b><?php echo !empty($quiz['essay']) ? 'essay' : 'multiple choice'; ?></b></div>
+                    <div class="mu-1">Duration: <b><?php echo $quiz['duration'] == 0 ? 'unlimited' : $quiz['duration'].' minutes'; ?></b></div>
+                    <div class="my-1">Number of questions: <b><?php echo $quiz['num_questions']; ?></b></div>
                 </div>
                 <a class="card-link btn btn-info" href="<?php echo site_url('quiz/view').'?id='.urlencode($quiz['quiz_id']); ?>">View <span class="fa fa-eye ms-2"></span></a>
                 <?php if ($role === 'instructor'): ?>
