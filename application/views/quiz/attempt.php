@@ -15,7 +15,19 @@ $choices = [NULL, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
     <h3>Question #<span class="zl-question-no">#</span></h3>
     <div class="spinner-border mb-2" id="loading"></div>
 <?php if (!empty($quiz['essay'])): ?>
-    <h5><span class="zl-question-no">#</span>. Write down your answer for question number <span class="zl-question-no">#</span> in the textbox below</h5>
+    <h5>Write down your answer for question number <span class="zl-question-no">#</span> in the textbox below</h5>
+    <div>
+        <div>
+            <textarea class="form-control" style="resize: vertical" rows="8" id="essay-answer" placeholder="Type your answer here and then click on 'Save' button when finished"></textarea>
+            <div class="form-text">Type your answer on the textbox above and then click on 'Save' button to update your answer on the server when finished. You can reset the local answer and replacing with the answer stored on the server by pressing the 'Sync' button.</div>
+        </div>
+        <div class="mt-3 row">
+            <div class="col-auto ms-auto">
+                <button type="button" class="btn btn-outline-primary zl-btn-action ms-2" id="sync-answer">Sync <span class="fa fa-redo ms-2"></span></button>
+                <button type="button" class="btn btn-primary zl-btn-action ms-2" id="save-answer">Save <span class="fa fa-save ms-2"></span></button>
+            </div>
+        </div>
+    </div>
 <?php else: ?>
     <p>Select one of the following options based on the question number <span class="zl-question-no">#</span> above</p>
     <div>
@@ -45,7 +57,9 @@ $choices = [NULL, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
                 <div class="col-6 col-md-3 my-2">
                     <div class="p-2 bg-white">
                         <div class="d-grid"><button class="btn btn-warning zl-btn-action zl-nav-btn" data-zl-question-no="<?php echo $i; ?>"><?php echo $i; ?></button></div>
-                        <div class="text-center zl-nav-answer" data-zl-question-no="<?php echo $i; ?>">-- N/A --</div>
+                        <?php if (empty($quiz['essay'])): ?>
+                            <div class="text-center zl-nav-answer" data-zl-question-no="<?php echo $i; ?>">-- N/A --</div>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endfor; ?>
@@ -53,7 +67,7 @@ $choices = [NULL, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
     </div>
 </div>
 <div class="my-3">
-    <a class="btn btn-success" href="<?php echo site_url('quiz/view').'?id='.urlencode($id); ?>"><span class="fa fa-save me-2"></span> Save and Close</a>
+    <a class="btn btn-success" onclick="return confirm('Are you sure to go back? (if you are currently working on an essay quiz, make sure you have saved the current answer before proceeding)')" href="<?php echo site_url('quiz/view').'?id='.urlencode($id); ?>"><span class="fa fa-save me-2"></span> Save and Close</a>
 </div>
 
 <script>
@@ -75,21 +89,35 @@ var numChoices;
 var timeRemaining;
 var deadline;
 
-function navigate(questionNo) {
-    if ((1 <= questionNo) && (questionNo <= numQuestions)) {
-        $('.zl-question-no').text(questionNo);
-
-        $('.zl-nav-btn')
-            .removeClass(['btn-warning', 'btn-info'])
-            .addClass('btn-warning');
-
-        $('.zl-nav-btn[data-zl-question-no="' + questionNo + '"]')
-            .removeClass('btn-warning')
-            .addClass('btn-info');
-
-        currentQuestionNo = questionNo;
+function navigate(questionNo, force) {
+    if (typeof(force) === 'boolean') {
+        if (force) {
+            force = true;
+        }
+    } else {
+        force = false;
     }
-    refresh();
+
+    var proceed = true;
+    if (essay && !force) {
+        proceed = confirm('Are you sure to navigate to another question? Make sure you have saved your current answer first');
+    }
+    if (proceed) {
+        if ((1 <= questionNo) && (questionNo <= numQuestions)) {
+            $('.zl-question-no').text(questionNo);
+
+            $('.zl-nav-btn')
+                .removeClass(['btn-warning', 'btn-info'])
+                .addClass('btn-warning');
+
+            $('.zl-nav-btn[data-zl-question-no="' + questionNo + '"]')
+                .removeClass('btn-warning')
+                .addClass('btn-info');
+
+            currentQuestionNo = questionNo;
+        }
+        refresh();
+    }
 }
 
 function showLoading() {
@@ -126,22 +154,26 @@ function refresh() {
         error: displayError,
         headers: tokenHeaders,
         method: 'POST',
-        success: function(response, status, xhr) {
-            $('.zl-nav-answer').each(function(index, element) {
-                var questionNo = $(element).attr('data-zl-question-no');
+        success: function(response) {
+            if (essay) {
+                $('#essay-answer').val(response.data[0]);
+            } else {
+                $('.zl-nav-answer').each(function(index, element) {
+                    var questionNo = $(element).attr('data-zl-question-no');
 
-                $(element).text(choices[response.data[questionNo.toString()]]);
-            });
+                    $(element).text(choices[response.data[questionNo.toString()][0]]);
+                });
 
-            $('.zl-choice-btn')
-                .removeClass(['btn-outline-dark', 'btn-dark'])
-                .addClass('btn-outline-dark');
+                $('.zl-choice-btn')
+                    .removeClass(['btn-outline-dark', 'btn-dark'])
+                    .addClass('btn-outline-dark');
 
-            var choiceId = response.data[currentQuestionNo.toString()];
-            if (choiceId > 0) {
-                $('.zl-choice-btn[data-zl-choice-id="' + choiceId + '"]')
-                    .removeClass('btn-outline-dark')
-                    .addClass('btn-dark');
+                var choiceId = response.data[currentQuestionNo.toString()][0];
+                if (choiceId > 0) {
+                    $('.zl-choice-btn[data-zl-choice-id="' + choiceId + '"]')
+                        .removeClass('btn-outline-dark')
+                        .addClass('btn-dark');
+                }
             }
         }
     });
@@ -169,6 +201,25 @@ function choose(choiceId) {
     }
 }
 
+function saveAnswer() {
+    showLoading();
+    $.ajax(putResponseUrl, {
+        complete: function() {
+            alert('Your answer has been successfully saved');
+            refresh();
+        },
+        contentType: 'application/json',
+        data: JSON.stringify({
+            question_no: currentQuestionNo,
+            data: $('#essay-answer').val()
+        }),
+        dataType: 'json',
+        error: displayError,
+        headers: tokenHeaders,
+        method: 'POST'
+    });
+}
+
 $(document).ready(function() {
     hideLoading();
 
@@ -177,10 +228,6 @@ $(document).ready(function() {
 
     getResponseUrl = $('#get-response-url').text();
     putResponseUrl = $('#put-response-url').text();
-
-    $('#clear-choice').on('click', function() {
-        choose(0);
-    });
 
     $('.zl-nav-btn').on('click', function(e) {
         navigate(parseInt($(e.target).attr('data-zl-question-no')));
@@ -195,12 +242,28 @@ $(document).ready(function() {
     });
 
     if (!essay) {
+        $('#clear-choice').on('click', function() {
+            choose(0);
+        });
+
         $('.zl-choice-btn').on('click', function(e) {
             choose(parseInt($(e.target).attr('data-zl-choice-id')));
         });
+    } else {
+        $('#save-answer').on('click', function() {
+            if (confirm('Save answer? This will overwrite your previous response on the server')) {
+                saveAnswer();
+            }
+        });
+
+        $('#sync-answer').on('click', function() {
+            if (confirm('Sync answer? This will overwrite your local answer written in the textbox above')) {
+                refresh();
+            }
+        });
     }
 
-    navigate(1);
+    navigate(1, true);
 
     var duration = <?php echo $quiz['duration'] * 60; ?>;
     $('#timer').hide();

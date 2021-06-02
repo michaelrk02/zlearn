@@ -21,7 +21,7 @@ class Material extends CI_Controller {
     }
 
     public function index() {
-        redirect('course/list');
+        redirect('course/listing');
     }
 
     public function view() {
@@ -83,11 +83,11 @@ class Material extends CI_Controller {
                 }
             } else {
                 zl_error('Invalid course ID');
-                redirect('course/list');
+                redirect('course/listing');
             }
         } else {
             zl_error('Invalid operation');
-            redirect('course/list');
+            redirect('course/listing');
         }
     }
 
@@ -135,20 +135,20 @@ class Material extends CI_Controller {
         $this->material = $this->materials->get($this->id, $columns);
         if ($this->material === NULL) {
             zl_error('Material not found');
-            redirect('course/list');
+            redirect('course/listing');
         }
 
         // must include `course_id` column or error otherwise
         $this->course = $this->courses->get($this->material['course_id'], 'title');
         if ($this->course === NULL) {
             zl_error('Invalid course');
-            redirect('course/list');
+            redirect('course/listing');
         }
 
         $this->role = $this->courses->get_role($this->material['course_id'], $this->user_id);
         if (!isset($this->role)) {
             zl_error('You have no access to view this material');
-            redirect('course/list');
+            redirect('course/listing');
         }
     }
 

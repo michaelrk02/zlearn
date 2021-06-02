@@ -59,6 +59,7 @@ class Authentication extends CI_Controller {
                         $user['name'] = $this->input->post('name');
                         $user['email'] = $this->input->post('email');
                         $user['hash'] = md5($this->input->ip_address());
+                        $user['allow_course_management'] = 0;
 
                         if ($this->users->add($user)) {
                             zl_success('You have been successfully registered! Use your credentials to login');
@@ -159,6 +160,7 @@ class Authentication extends CI_Controller {
                 $user['name'] = $this->input->post('name');
                 $user['email'] = $this->input->post('email');
                 $user['hash'] = md5($this->input->ip_address());
+                $user['allow_course_management'] = 0;
 
                 if ($this->users->add($user)) {
                     zl_session_set('incomplete', NULL);

@@ -28,6 +28,7 @@
     <div class="my-3">
         <label class="form-label">Number of questions <span class="text-danger">*</span></label>
         <input type="number" class="form-control" name="num_questions" placeholder="Number of quiz questions" value="<?php echo htmlspecialchars($quiz['num_questions']); ?>">
+        <div class="form-text">WARNING: changing this value will reset user responses</div>
     </div>
     <div class="my-3">
         <label class="form-label">Questions PDF <span class="text-danger">*</span></label>
@@ -37,10 +38,10 @@
     </div>
     <div class="my-3">
         <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="essay" value="1" <?php echo !empty($course['essay']) ? 'checked' : ''; ?>>
+            <input class="form-check-input" type="checkbox" name="essay" value="1" <?php echo !empty($quiz['essay']) ? 'checked' : ''; ?>>
             <label class="form-check-label">Essay</label>
         </div>
-        <div class="form-text">Whether the quiz type is essay or multiple choice</div>
+        <div class="form-text">Whether the quiz type is essay or multiple choice. WARNING: changing this value will reset user responses</div>
     </div>
     <div class="my-3">
         <label class="form-label">Number of multiple choices <span class="text-danger">*</span></label>
@@ -49,18 +50,18 @@
                 <option value="<?php echo $i; ?>" <?php echo ($quiz['mc_num_choices'] == $i) ? 'selected' : ''; ?>><?php echo $i; ?></option>
             <?php endfor; ?>
         </select>
-        <div class="form-text">Ignore (or set to default value of 2) if the quiz type is essay</div>
+        <div class="form-text">Ignore (or set to default value of 2) if the quiz type is essay. WARNING: changing this value will reset user responses</div>
     </div>
     <div class="my-3">
         <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="show_grades" value="1" <?php echo !empty($course['show_grades']) ? 'checked' : ''; ?>>
+            <input class="form-check-input" type="checkbox" name="show_grades" value="1" <?php echo !empty($quiz['show_grades']) ? 'checked' : ''; ?>>
             <label class="form-check-label">Show grades</label>
         </div>
         <div class="form-text">Allow participants to see their own grades</div>
     </div>
     <div class="my-3">
         <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="essay" value="1" <?php echo !empty($course['show_leaderboard']) ? 'checked' : ''; ?>>
+            <input class="form-check-input" type="checkbox" name="essay" value="1" <?php echo !empty($quiz['show_leaderboard']) ? 'checked' : ''; ?>>
             <label class="form-check-label">Show leaderboard</label>
         </div>
         <div class="form-text">Whether to enable leaderboard feature (display rank and other participants' grades)</div>

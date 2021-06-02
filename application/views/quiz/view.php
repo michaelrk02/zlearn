@@ -32,7 +32,6 @@
 </ul>
 <?php if (($role === 'participant') && empty($quiz['locked']) && isset($attempt)): ?>
     <h3>Last Attempt</h3>
-    <div class="my-1"><b><?php echo $attempt['answered']; ?></b> out of <?php echo $quiz['num_questions']; ?> questions have been answered</div>
     <div class="my-1">Started on <span id="timestamp"><?php echo $attempt['timestamp']; ?></span></div>
 <?php endif; ?>
 <div class="my-3">

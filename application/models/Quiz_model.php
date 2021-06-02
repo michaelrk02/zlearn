@@ -36,12 +36,15 @@ class Quiz_model extends CI_Model {
     }
 
     public function rehash($id) {
-        $quiz = $this->get($id, 'duration, num_questions, questions_hash, essay');
+        $quiz = $this->get($id, 'duration, num_questions, questions_hash, essay, mc_num_choices');
         $args = [];
         $args[] = (int)$quiz['duration'];
         $args[] = (int)$quiz['num_questions'];
         $args[] = $quiz['questions_hash'];
         $args[] = (int)$quiz['essay'];
+        if (empty($quiz['essay'])) {
+            $args[] = (int)$quiz['mc_num_choices'];
+        }
         $args = serialize($args);
         $hash = md5($args);
 
@@ -56,19 +59,32 @@ class Quiz_model extends CI_Model {
             $response['quiz_id'] = $id;
             $response['user_id'] = $user_id;
             $response['timestamp'] = $timestamp;
-
-            $response['data'] = [];
-            for ($i = 1; $i <= $num_questions; $i++) {
-                $response['data'][$i] = $essay ? '' : 0;
-            }
-            $response['data'] = serialize($response['data']);
-
+            $response['data'] = '';
             $response['score'] = 0;
             $response['comment'] = '';
 
-            return $this->db->insert('quiz_responses', $response);
+            if ($this->db->insert('quiz_responses', $response)) {
+                $response['data'] = $this->init_response_data($essay, $num_questions);
+                return $this->set_response_info($id, $user_id, $response);
+            }
+            return FALSE;
         }
         return TRUE;
+    }
+
+    public function init_response_data($essay, $num_questions) {
+        $data = [];
+        for ($i = 1; $i <= $num_questions; $i++) {
+            $data[$i] = [$essay ? '' : 0, 0];
+        }
+        $data = serialize($data);
+        return $data;
+    }
+
+    public function update_response_data($id, $essay, $num_questions) {
+        $response = [];
+        $response['data'] = $this->init_response_data($essay, $num_questions);
+        return $this->db->where('quiz_id', $id)->update('quiz_responses', $response);
     }
 
     public function get_response_info($id, $user_id, $columns = '*') {
@@ -81,21 +97,21 @@ class Quiz_model extends CI_Model {
 
     public function get_response($id, $user_id, $question_no = NULL) {
         $data = $this->db->select('data')->from('quiz_responses')->where(['quiz_id' => $id, 'user_id' => $user_id])->get()->row_array(0);
-        return $this->unserialize_response_data($data['data']);
+        return $this->unserialize_response_data($data['data'], $question_no);
     }
 
     public function put_response($id, $user_id, $question_no, $value) {
         $data = $this->get_response($id, $user_id);
         if (isset($data)) {
             $data = $data['data'];
-            $data[$question_no] = $value;
+            $data[$question_no][0] = $value;
             $data = serialize($data);
             return $this->db->where(['quiz_id' => $id, 'user_id' => $user_id])->update('quiz_responses', ['data' => $data]);
         }
         return FALSE;
     }
 
-    public function unserialize_response_data($data) {
+    public function unserialize_response_data($data, $question_no) {
         if (isset($data)) {
             $data = unserialize($data);
             if (isset($question_no)) {

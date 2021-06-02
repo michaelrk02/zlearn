@@ -21,7 +21,7 @@ class Quiz extends CI_Controller {
     }
 
     public function index() {
-        redirect('course/list');
+        redirect('course/listing');
     }
 
     public function view() {
@@ -30,18 +30,11 @@ class Quiz extends CI_Controller {
         $attempt = NULL;
 
         if ($this->role === 'participant') {
-            $info = $this->quizzes->get_response_info($this->id, $this->user_id, 'timestamp, data, score');
+            $info = $this->quizzes->get_response_info($this->id, $this->user_id, 'timestamp, score');
             if (isset($info)) {
-                $response = $this->quizzes->unserialize_response_data($info['data']);
                 $attempt = [];
                 $attempt['timestamp'] = $info['timestamp'];
                 $attempt['score'] = $info['score'];
-                $attempt['answered'] = 0;
-                for ($i = 1; $i <= $this->quiz['num_questions']; $i++) {
-                    if (!empty($response['data'][$i])) {
-                        $attempt['answered']++;
-                    }
-                }
             }
         }
 
@@ -87,6 +80,13 @@ class Quiz extends CI_Controller {
         }
     }
 
+    public function grade() {
+        $this->init_quiz('course_id, title, num_questions, essay');
+        $this->ensure_role('instructor');
+
+        $question_no = $this->input->get('question_no');
+    }
+
     public function create() {
         $course_id = $this->input->get('course_id');
 
@@ -105,6 +105,7 @@ class Quiz extends CI_Controller {
                     $this->quiz['mc_num_choices'] = 2;
                     $this->quiz['show_grades'] = 0;
                     $this->quiz['show_leaderboard'] = 0;
+                    $this->quiz['hash'] = '';
 
                     if (!empty($this->input->post('submit'))) {
                         $this->load->library('form_validation');
@@ -173,11 +174,11 @@ class Quiz extends CI_Controller {
                 }
             } else {
                 zl_error('Invalid course ID');
-                redirect('course/list');
+                redirect('course/listing');
             }
         } else {
             zl_error('Invalid operation');
-            redirect('course/list');
+            redirect('course/listing');
         }
     }
 
@@ -191,6 +192,10 @@ class Quiz extends CI_Controller {
             $this->init_quiz_manager($this->form_validation);
 
             if ($this->form_validation->run()) {
+                $num_questions = $this->quiz['num_questions'];
+                $essay = !empty($this->quiz['essay']);
+                $mc_num_choices = $this->quiz['mc_num_choices'];
+
                 $this->quiz['title'] = $this->input->post('title');
                 $this->quiz['description'] = $this->input->post('description');
                 $this->quiz['num_questions'] = $this->input->post('num_questions');
@@ -211,8 +216,13 @@ class Quiz extends CI_Controller {
                 if ($this->quizzes->set($this->id, $this->quiz) && $this->quizzes->rehash($this->id)) {
                     if (($pdf_hash = $this->upload_pdf_file()) !== FALSE) {
                         if ($this->quizzes->set($this->id, ['questions_hash' => $pdf_hash]) && $this->quizzes->rehash($this->id)) {
-                            zl_success('Quiz updated successfully');
-                            redirect(site_url('quiz/view').'?id='.urlencode($this->id));
+                            $update = ($this->quiz['num_questions'] != $num_questions) || (!empty($this->quiz['essay']) === !$essay) || (empty($this->quiz['essay']) && ($this->quiz['mc_num_choices'] != $mc_num_choices)) ? $this->quizzes->update_response_data($this->id, !empty($this->quiz['essay']), $this->quiz['num_questions']) : TRUE;
+                            if ($update) {
+                                zl_success('Quiz updated successfully');
+                                redirect(site_url('quiz/view').'?id='.urlencode($this->id));
+                            } else {
+                                zl_error('Failed updating user responses. Please try again later');
+                            }
                         } else {
                             zl_error('Failed updating the PDF file. Please try again later');
                         }
@@ -344,20 +354,20 @@ class Quiz extends CI_Controller {
         $this->quiz = $this->quizzes->get($this->id, $columns);
         if ($this->quiz === NULL) {
             zl_error('Quiz not found');
-            redirect('course/list');
+            redirect('course/listing');
         }
 
         // must include `course_id` column or error otherwise
         $this->course = $this->courses->get($this->quiz['course_id'], 'title');
         if ($this->course === NULL) {
             zl_error('Invalid course');
-            redirect('course/list');
+            redirect('course/listing');
         }
 
         $this->role = $this->courses->get_role($this->quiz['course_id'], $this->user_id);
         if (!isset($this->role)) {
             zl_error('You have no access to view this quiz');
-            redirect('course/list');
+            redirect('course/listing');
         }
     }
 

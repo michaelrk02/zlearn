@@ -35,7 +35,7 @@ $(document).ready(function() {
 
 </script>
 
-<div class="my-2"><a href="<?php echo site_url('course/list'); ?>"><span class="fa fa-arrow-circle-left me-2"></span> Back to My Courses</a></div>
+<div class="my-2"><a href="<?php echo site_url('course/listing'); ?>"><span class="fa fa-arrow-circle-left me-2"></span> Back to My Courses</a></div>
 <h1><?php echo $course['title']; ?></h1>
 <p>Status: <b><?php echo $role; ?></b></p>
 <p><?php echo $course['metadata']; ?></p>

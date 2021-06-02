@@ -20,10 +20,10 @@ class Course extends CI_Controller {
     }
 
     public function index() {
-        redirect('course/list');
+        redirect('course/listing');
     }
 
-    public function list() {
+    public function listing() {
         $filter = $this->input->get('filter');
         $filter = isset($filter) ? $filter : '';
 
@@ -38,7 +38,7 @@ class Course extends CI_Controller {
         $courses = $this->courses->list_member_courses($this->user_id, ZL_DB_PREFIX.'courses.course_id AS course_id, title, metadata, instructor', $filter, ($page - 1) * $display, $display);
 
         $this->load->view('header', ['title' => 'My Courses']);
-        $this->load->view('course/list', [
+        $this->load->view('course/listing', [
             'courses' => $courses,
             'allow_course_management' => !empty($this->auth->user['allow_course_management']),
             'filter' => $filter,
@@ -154,7 +154,7 @@ class Course extends CI_Controller {
             if (!empty($this->course['allow_leave'])) {
                 if ($this->courses->remove_member($this->id, $this->user_id)) {
                     zl_success('Successfully left from <b>'.htmlspecialchars($this->course['title']).'</b>');
-                    redirect('course/list');
+                    redirect('course/listing');
                 } else {
                     zl_error('Failed to leave this course');
                     redirect(site_url('course/view').'?id='.urlencode($this->id));
@@ -165,7 +165,7 @@ class Course extends CI_Controller {
             }
         } else {
             zl_error('You are not a member of this course');
-            redirect('course/list');
+            redirect('course/listing');
         }
     }
 
@@ -265,7 +265,7 @@ class Course extends CI_Controller {
 
         if ($this->courses->remove($this->id)) {
             zl_success('Successfully deleted course: <b>'.$this->course['title'].'</b> (ID: <code>'.$this->id.'</code>)');
-            redirect('course/list');
+            redirect('course/listing');
         } else {
             zl_error('Failed to delete course');
         }
@@ -304,7 +304,7 @@ class Course extends CI_Controller {
     protected function init_course($columns = '*') {
         if ($this->id === NULL) {
             zl_error('Please choose a course first');
-            redirect('course/list');
+            redirect('course/listing');
         }
 
         $this->load->model('course_model', 'courses');
@@ -312,13 +312,13 @@ class Course extends CI_Controller {
         $this->course = $this->courses->get($this->id, $columns);
         if ($this->course === NULL) {
             zl_error('Course not found');
-            redirect('course/list');
+            redirect('course/listing');
         }
 
         $this->role = $this->courses->get_role($this->id, $this->user_id);
         if (!isset($this->role)) {
             zl_error('You have no access to this course');
-            redirect('course/list');
+            redirect('course/listing');
         }
     }
 
@@ -347,7 +347,7 @@ class Course extends CI_Controller {
     protected function ensure_management($manager = TRUE) {
         if (empty($this->auth->user['allow_course_management']) === $manager) {
             zl_error('You must '.(!$manager ? 'not ' : '').'be a manager to perform this action');
-            redirect(site_url('course/list'));
+            redirect(site_url('course/listing'));
         }
     }
 
