@@ -100,11 +100,16 @@ class Quiz_model extends CI_Model {
         return $this->unserialize_response_data($data['data'], $question_no);
     }
 
-    public function put_response($id, $user_id, $question_no, $value) {
+    public function put_response($id, $user_id, $question_no, $value = NULL, $grade = NULL) {
         $data = $this->get_response($id, $user_id);
         if (isset($data)) {
             $data = $data['data'];
-            $data[$question_no][0] = $value;
+            if (isset($value)) {
+                $data[$question_no][0] = $value;
+            }
+            if (isset($grade)) {
+                $data[$question_no][1] = $grade;
+            }
             $data = serialize($data);
             return $this->db->where(['quiz_id' => $id, 'user_id' => $user_id])->update('quiz_responses', ['data' => $data]);
         }

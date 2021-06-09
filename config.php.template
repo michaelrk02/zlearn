@@ -1,0 +1,28 @@
+<?php
+define('ZL_ENV', 'development');
+
+define('ZL_APP_TITLE', 'Z-Learn');
+define('ZL_APP_DESC', 'Simple and Easy Learning Management System');
+
+define('ZL_URL', '');
+
+define('ZL_DB_HOST', 'localhost');
+define('ZL_DB_USER', '');
+define('ZL_DB_PASS', '');
+define('ZL_DB_NAME', '');
+define('ZL_DB_PREFIX', 'zl_');
+
+define('ZL_SESS_COOKIE', 'zl_session');
+define('ZL_SESS_PATH', NULL);
+
+define('ZL_SECRET_KEY', '');
+
+define('ZL_SSO_ENABLE', FALSE);
+define('ZL_SSO_NAME', '');
+define('ZL_SSO_HOME', '');
+define('ZL_SSO_URL', ZL_SSO_HOME.'');
+define('ZL_SSO_APP_ID', '');
+define('ZL_SSO_APP_SECRET', '');
+
+define('ZL_SSO_FIXED', FALSE);
+

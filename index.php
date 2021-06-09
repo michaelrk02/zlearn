@@ -36,6 +36,8 @@
  * @filesource
  */
 
+require_once './config.php';
+
 /*
  *---------------------------------------------------------------
  * APPLICATION ENVIRONMENT
@@ -53,7 +55,7 @@
  *
  * NOTE: If you change these, also change the error_reporting() code below
  */
-	define('ENVIRONMENT', $_SERVER['SERVER_NAME'] === 'localhost' ? 'development' : 'production');
+	define('ENVIRONMENT', ZL_ENV);
 
 /*
  *---------------------------------------------------------------
@@ -312,8 +314,6 @@ switch (ENVIRONMENT)
  *
  * And away we go...
  */
-
-require_once APPPATH.'zlearn.'.ENVIRONMENT.'.php';
 
 require_once BASEPATH.'core/CodeIgniter.php';
 

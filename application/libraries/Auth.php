@@ -61,15 +61,23 @@ class Auth {
         return 'sso:'.md5($user_id);
     }
 
-    public function sso_url($redirect = NULL, $param = 'token') {
-        if (!isset($redirect)) {
-            $redirect = uri_string();
+    public function sso_url($param = 'sso', $redirect_url = NULL, $redirect_param = 'token') {
+        if (!isset($redirect_url)) {
+            $redirect_url = site_url(uri_string());
         }
-        $redirect = site_url($redirect);
 
-        $timestamp = time();
-        $signature = hash_hmac('sha256', ZL_SSO_APP_ID.':'.$timestamp, ZL_SSO_APP_SECRET);
-        return ZL_SSO_URL.'?app_id='.urlencode(ZL_SSO_APP_ID).'&timestamp='.urlencode($timestamp).'&signature='.urlencode($signature).'&redirect='.urlencode($redirect).'&param='.urlencode($param);
+        $sso = [];
+        $sso['app_id'] = ZL_SSO_APP_ID;
+        $sso['timestamp'] = time();
+        $sso['redirect_url'] = $redirect_url;
+        $sso['redirect_param'] = $redirect_param;
+        $sso = base64_encode(json_encode($sso));
+
+        $signature = hash_hmac('sha256', $sso, ZL_SSO_APP_SECRET);
+
+        $token = base64_encode($sso.':'.$signature);
+
+        return ZL_SSO_URL.'?'.$param.'='.urlencode($token);
     }
 
     public function create_token($data, $lifetime = 86400) {

@@ -7,5 +7,5 @@ application/logs/*
 application/storage/*
 !application/storage/index.html
 
-application/zlearn.production.php
+/config.php
 

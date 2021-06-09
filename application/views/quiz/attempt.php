@@ -18,7 +18,7 @@ $choices = [NULL, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
     <h5>Write down your answer for question number <span class="zl-question-no">#</span> in the textbox below</h5>
     <div>
         <div>
-            <textarea class="form-control" style="resize: vertical" rows="8" id="essay-answer" placeholder="Type your answer here and then click on 'Save' button when finished"></textarea>
+            <textarea class="form-control font-monospace" style="resize: vertical" rows="8" id="essay-answer" placeholder="Type your answer here and then click on 'Save' button when finished"></textarea>
             <div class="form-text">Type your answer on the textbox above and then click on 'Save' button to update your answer on the server when finished. You can reset the local answer and replacing with the answer stored on the server by pressing the 'Sync' button.</div>
         </div>
         <div class="mt-3 row">

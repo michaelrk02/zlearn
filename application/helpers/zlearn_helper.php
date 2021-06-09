@@ -2,7 +2,7 @@
 defined('BASEPATH') OR exit;
 
 function zl_session_get($key) {
-    $key = ZL_SESS_PREFIX.$key;
+    //$key = ZL_SESS_PREFIX.$key;
     if (isset($_SESSION[$key])) {
         return $_SESSION[$key];
     }
@@ -10,7 +10,7 @@ function zl_session_get($key) {
 }
 
 function zl_session_set($key, $value) {
-    $key = ZL_SESS_PREFIX.$key;
+    //$key = ZL_SESS_PREFIX.$key;
     if (isset($value)) {
         $_SESSION[$key] = $value;
     } else {

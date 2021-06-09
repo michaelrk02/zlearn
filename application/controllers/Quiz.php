@@ -84,7 +84,78 @@ class Quiz extends CI_Controller {
         $this->init_quiz('course_id, title, num_questions, essay');
         $this->ensure_role('instructor');
 
-        $question_no = $this->input->get('question_no');
+        if (!empty($this->quiz['essay'])) {
+            $user_id = $this->input->get('user_id');
+            $question_no = $this->input->get('question_no');
+
+            if (is_numeric($question_no)) {
+                $question_no = min(max($question_no, 1), $this->quiz['num_questions']);
+
+                $response = $this->quizzes->get_response($this->id, $user_id, $question_no);
+                if (isset($response)) {
+                    $this->load->library('users_model', 'users');
+
+                    if (!empty($this->input->post('submit'))) {
+                        $this->load->library('form_validation');
+
+                        $this->form_validation->set_rules('grade', 'Grade', 'integer');
+
+                        if ($this->form_validation->run()) {
+                            $grade = $this->input->post('grade');
+
+                            if ($this->quizzes->put_response($this->id, $user_id, $question_no, NULL, $grade)) {
+                                zl_success('Question number '.$question_no.' was graded successfully');
+                            } else {
+                                zl_error('Unable to grade. Please try again later');
+                            }
+                        } else {
+                            zl_error($this->form_validation->error_string());
+                        }
+                    }
+
+                    $user = $this->users->get($user_id, 'name');
+
+                    $this->load->view('header', ['title' => 'Quiz Grading']);
+                    $this->load->view('quiz/grade', [
+                        'course' => $this->course,
+                        'quiz' => $this->quiz,
+                        'id' => $this->id,
+                        'user' => $user,
+                        'user_id' => $user_id,
+                        'question_no' => $question_no,
+                        'response' => $response
+                    ]);
+                    $this->load->view('footer');
+                } else {
+                    zl_error('Cannot find user response');
+                    redirect(site_url('quiz/view').'?id='.urlencode($this->id));
+                }
+            } else {
+                zl_error('Invalid question number');
+                redirect(site_url('quiz/view').'?id='.urlencode($this->id));
+            }
+        } else {
+            zl_error('Not an essay type of quiz. Unable to grade manually');
+            redirect(site_url('quiz/view').'?id='.urlencode($this->id));
+        }
+    }
+
+    public function grades() {
+        $this->init_quiz('course_id, title, essay');
+    }
+
+    public function autograde() {
+        $this->init_quiz('course_id, title, num_questions, essay');
+        $this->ensure_role('instructor');
+
+        if (empty($this->quiz['essay'])) {
+            $user_id = $this->input->get('user_id');
+
+            
+        } else {
+            zl_error('Not a multiple choice type of quiz. Unable to perform autograding');
+            redirect(site_url('quiz/view').'?id='.urlencode($this->id));
+        }
     }
 
     public function create() {
@@ -205,19 +276,20 @@ class Quiz extends CI_Controller {
                 $this->quiz['show_grades'] = !empty($this->input->post('show_grades'));
                 $this->quiz['show_leaderboard'] = !empty($this->input->post('show_leaderboard'));
 
-                $this->quiz['mc_answers'] = unserialize($this->quiz['mc_answers']);
-                for ($i = 1; $i <= $this->quiz['num_questions']; $i++) {
-                    if ($this->quiz['mc_answers'][$i] > $this->quiz['mc_num_choices']) {
+                $reset_answers = ($this->quiz['num_questions'] != $num_questions) || (!empty($this->quiz['essay']) === !$essay) || (empty($this->quiz['essay']) && ($this->quiz['mc_num_choices'] != $mc_num_choices)) ? $this->quizzes->update_response_data($this->id, !empty($this->quiz['essay']), $this->quiz['num_questions']) : TRUE;
+
+                if ($reset_answers) {
+                    $this->quiz['mc_answers'] = unserialize($this->quiz['mc_answers']);
+                    for ($i = 1; $i <= $this->quiz['num_questions']; $i++) {
                         $this->quiz['mc_answers'][$i] = 0;
                     }
+                    $this->quiz['mc_answers'] = serialize($this->quiz['mc_answers']);
                 }
-                $this->quiz['mc_answers'] = serialize($this->quiz['mc_answers']);
 
                 if ($this->quizzes->set($this->id, $this->quiz) && $this->quizzes->rehash($this->id)) {
                     if (($pdf_hash = $this->upload_pdf_file()) !== FALSE) {
                         if ($this->quizzes->set($this->id, ['questions_hash' => $pdf_hash]) && $this->quizzes->rehash($this->id)) {
-                            $update = ($this->quiz['num_questions'] != $num_questions) || (!empty($this->quiz['essay']) === !$essay) || (empty($this->quiz['essay']) && ($this->quiz['mc_num_choices'] != $mc_num_choices)) ? $this->quizzes->update_response_data($this->id, !empty($this->quiz['essay']), $this->quiz['num_questions']) : TRUE;
-                            if ($update) {
+                            if ($reset_answers) {
                                 zl_success('Quiz updated successfully');
                                 redirect(site_url('quiz/view').'?id='.urlencode($this->id));
                             } else {
