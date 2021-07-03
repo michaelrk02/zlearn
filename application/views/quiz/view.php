@@ -2,12 +2,16 @@
 <?php echo zl_status(); ?>
 <h1><?php echo htmlspecialchars($quiz['title']); ?> <?php if (!empty($quiz['locked'])): ?><span class="badge bg-secondary"><span class="fa fa-lock me-2"></span> LOCKED</span><?php endif; ?></h1>
 <p>Quiz on <a href="<?php echo site_url('course/view').'?id='.urlencode($quiz['course_id']); ?>"><?php echo $course['title']; ?></a></p>
-<?php if ($role === 'instructor'): ?>
-    <div class="my-3">
+
+<div class="my-3">
+    <?php if ($role === 'instructor'): ?>
         <a class="mx-1" href="<?php echo site_url('quiz/edit').'?id='.urlencode($id); ?>">Edit quiz</a>
         <a class="mx-1" href="<?php echo site_url('quiz/configure').'?id='.urlencode($id); ?>">Configure quiz</a>
-    </div>
-<?php endif; ?>
+    <?php endif; ?>
+    <?php if (($role === 'instructor') || !empty($quiz['show_leaderboard'])): ?>
+        <a class="mx-1" href="<?php echo site_url('quiz/grades').'?id='.urlencode($id); ?>">Grades / leaderboard</a>
+    <?php endif; ?>
+</div>
 <h3>Description</h3>
 <p id="description"><?php echo htmlspecialchars($quiz['description']); ?></p>
 <h3>Technical Specifications</h3>
@@ -15,7 +19,7 @@
     <li>Duration: <b><?php echo $quiz['duration'] == 0 ? 'unlimited' : $quiz['duration'].' minutes' ?></b></li>
     <li>Number of questions: <b><?php echo $quiz['num_questions']; ?></b></li>
     <li>Type: <b><?php echo !empty($quiz['essay']) ? 'essay' : 'multiple choice'; ?></b></li>
-    <li>Show grades: <b><?php echo !empty($quiz['show_grades']) ? 'yes' : 'no'; ?></b></li>
+    <li>Show individual grades: <b><?php echo !empty($quiz['show_grades']) ? 'yes' : 'no'; ?></b></li>
     <li>Show leaderboard: <b><?php echo !empty($quiz['show_leaderboard']) ? 'yes' : 'no'; ?></b></li>
 </ul>
 <h3>Grading</h3>

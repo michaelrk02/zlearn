@@ -55,8 +55,6 @@ class Course_model extends CI_Model {
     }
 
     public function remove_member($course_id, $user_id) {
-        
-
         return $this->db->where(['course_id' => $course_id, 'user_id' => $user_id])->delete('course_members') !== FALSE;
     }
 

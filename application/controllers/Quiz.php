@@ -80,6 +80,20 @@ class Quiz extends CI_Controller {
         }
     }
 
+    public function autograde() {
+        $this->init_quiz('course_id, title, num_questions, essay');
+        $this->ensure_role('instructor');
+
+        if (empty($this->quiz['essay'])) {
+            $user_id = $this->input->get('user_id');
+
+            
+        } else {
+            zl_error('Not a multiple choice type of quiz. Unable to perform autograding');
+            redirect(site_url('quiz/view').'?id='.urlencode($this->id));
+        }
+    }
+
     public function grade() {
         $this->init_quiz('course_id, title, num_questions, essay');
         $this->ensure_role('instructor');
@@ -98,13 +112,14 @@ class Quiz extends CI_Controller {
                     if (!empty($this->input->post('submit'))) {
                         $this->load->library('form_validation');
 
-                        $this->form_validation->set_rules('grade', 'Grade', 'integer');
+                        $this->form_validation->set_rules('points', 'Points', 'integer');
 
                         if ($this->form_validation->run()) {
-                            $grade = $this->input->post('grade');
+                            $points = $this->input->post('points');
 
-                            if ($this->quizzes->put_response($this->id, $user_id, $question_no, NULL, $grade)) {
-                                zl_success('Question number '.$question_no.' was graded successfully');
+                            if ($this->quizzes->put_response($this->id, $user_id, $question_no, NULL, $points)) {
+                                zl_success('Successfully graded with <b>'.$points.' points</b>');
+                                redirect(site_url('quiz/grade').'?id='.urlencode($this->id).'&user_id='.urlencode($user_id).'&question_no='.$question_no);
                             } else {
                                 zl_error('Unable to grade. Please try again later');
                             }
@@ -140,22 +155,102 @@ class Quiz extends CI_Controller {
         }
     }
 
-    public function grades() {
-        $this->init_quiz('course_id, title, essay');
-    }
-
-    public function autograde() {
+    public function save_response() {
         $this->init_quiz('course_id, title, num_questions, essay');
         $this->ensure_role('instructor');
 
-        if (empty($this->quiz['essay'])) {
-            $user_id = $this->input->get('user_id');
+        if (!empty($this->quiz['essay'])) {
+            $this->load->library('users_model', 'users');
 
-            
+            $user_id = $this->input->get('user_id');
+            $question_no = $this->input->get('question_no');
+
+            $user = $this->users->get($user_id, 'name');
+            if (isset($user)) {
+                if (is_numeric($question_no)) {
+                    $question_no = min(max($question_no, 1), $this->quiz['num_questions']);
+
+                    $response = $this->quizzes->get_response($this->id, $user_id, $question_no);
+                    if (isset($response)) {
+                        $unique_id = md5($this->id.'/'.$user_id.'/'.$question_no);
+                        $filename = url_title($this->quiz['title']).'_'.url_title($user['name']).'_'.$question_no.'_'.$unique_id;
+
+                        $this->output->set_status_header(200);
+                        $this->output->set_content_type('text/plain');
+                        $this->output->set_header('Content-Disposition: attachment; filename="'.$filename.'.txt"');
+                        $this->output->set_output($response['data'][0]);
+                    } else {
+                        zl_error('Cannot find user response');
+                        redirect(site_url('quiz/view').'?id='.urlencode($this->id));
+                    }
+                } else {
+                    zl_error('Invalid question number');
+                    redirect(site_url('quiz/view').'?id='.urlencode($this->id));
+                }
+            } else {
+                zl_error('Invalid user ID');
+                redirect(site_url('quiz/view').'?id='.urlencode($this->id));
+            }
         } else {
-            zl_error('Not a multiple choice type of quiz. Unable to perform autograding');
+            zl_error('Not an essay type of quiz. Unable to save user response');
             redirect(site_url('quiz/view').'?id='.urlencode($this->id));
         }
+    }
+
+    public function grade_calculate() {
+        $this->init_quiz('course_id, num_questions, essay');
+        $this->ensure_role('instructor');
+
+        $this->load->model('users_model', 'users');
+
+        $user_id = $this->input->get('user_id');
+
+        if (!empty($user_id)) {
+            $user = $this->users->get($user_id, 'name');
+            if (isset($user)) {
+                if ($this->quizzes->calculate_grade($this->id, $user_id)) {
+                    zl_success('Successfully calculated grade of <b>'.htmlspecialchars($user['name']).'</b> (ID: '.htmlspecialchars($user_id).')');
+                    redirect(site_url('quiz/grades').'?id='.urlencode($this->id).'#UID-'.md5($user_id));
+                } else {
+                    zl_error('Unable to calculate grade of user: '.htmlspecialchars($user['name']).' (ID: '.$user_id.')');
+                    redirect(site_url('quiz/grades').'?id='.urlencode($this->id));
+                }
+            } else {
+                zl_error('Invalid user ID: '.htmlspecialchars($user_id));
+                redirect(site_url('quiz/grades').'?id='.urlencode($this->id));
+            }
+        } else {
+            $this->load->database();
+            $responses = $this->quizzes->list_responses($this->id, $this->db->dbprefix('quiz_responses').'.user_id AS user_id');
+            $count = count($responses);
+            $success = 0;
+            foreach ($responses as $response) {
+                if ($this->quizzes->calculate_grade($this->id, $response['user_id'])) {
+                    $success++;
+                }
+            }
+            if ($count == $success) {
+                zl_success('Successfully calculated all grades');
+            } else {
+                zl_warning('Not all grades calculated (only '.$success.' out of '.$count.' respondents)');
+            }
+            redirect(site_url('quiz/grades').'?id='.urlencode($this->id));
+        }
+    }
+
+    public function grades() {
+        $this->init_quiz('course_id, title, essay, show_leaderboard');
+
+        $this->load->database();
+
+        $grades = [];
+        if (!empty($this->quiz['show_leaderboard']) || ($this->role === 'instructor')) {
+            $grades = $this->quizzes->list_responses($this->id, $this->db->dbprefix('quiz_responses').'.user_id AS user_id, name, score', $this->role === 'participant');
+        }
+
+        $this->load->view('header', ['title' => $this->quiz['title'].' - Responses']);
+        $this->load->view('quiz/grades', ['id' => $this->id, 'user_id' => $this->user_id, 'role' => $this->role, 'quiz' => $this->quiz, 'course' => $this->course, 'grades' => $grades]);
+        $this->load->view('footer');
     }
 
     public function create() {
@@ -254,7 +349,7 @@ class Quiz extends CI_Controller {
     }
 
     public function edit() {
-        $this->init_quiz('course_id, title, description, duration, num_questions, questions_hash, essay, mc_num_choices, mc_answers, show_grades, show_leaderboard');
+        $this->init_quiz('course_id, title, description, duration, num_questions, questions_hash, essay, mc_num_choices, mc_answers, show_grades, show_leaderboard, locked');
         $this->ensure_role('instructor');
 
         if (!empty($this->input->post('submit'))) {
@@ -275,6 +370,7 @@ class Quiz extends CI_Controller {
                 $this->quiz['mc_num_choices'] = $this->input->post('mc_num_choices');
                 $this->quiz['show_grades'] = !empty($this->input->post('show_grades'));
                 $this->quiz['show_leaderboard'] = !empty($this->input->post('show_leaderboard'));
+                $this->quiz['locked'] = !empty($this->input->post('locked'));
 
                 $reset_answers = ($this->quiz['num_questions'] != $num_questions) || (!empty($this->quiz['essay']) === !$essay) || (empty($this->quiz['essay']) && ($this->quiz['mc_num_choices'] != $mc_num_choices)) ? $this->quizzes->update_response_data($this->id, !empty($this->quiz['essay']), $this->quiz['num_questions']) : TRUE;
 
@@ -316,6 +412,7 @@ class Quiz extends CI_Controller {
             $this->quiz['mc_num_choices'] = set_value('mc_num_choices');
             $this->quiz['show_grades'] = !empty(set_value('show_grades'));
             $this->quiz['show_leaderboard'] = !empty(set_value('show_leaderboard'));
+            $this->quiz['locked'] = !empty(set_value('locked'));
         }
 
         $this->load->view('header', ['title' => 'Edit Quiz']);
@@ -324,7 +421,7 @@ class Quiz extends CI_Controller {
     }
 
     public function configure() {
-        $this->init_quiz('course_id, title, num_questions, essay, mc_num_choices, mc_score_correct, mc_score_incorrect, mc_score_empty, mc_answers, locked');
+        $this->init_quiz('course_id, title, num_questions, essay, mc_num_choices, mc_score_correct, mc_score_incorrect, mc_score_empty, mc_answers');
         $this->ensure_role('instructor');
 
         $this->quiz['mc_answers'] = unserialize($this->quiz['mc_answers']);
@@ -352,8 +449,6 @@ class Quiz extends CI_Controller {
                     }
                     $this->quiz['mc_answers'] = serialize($this->quiz['mc_answers']);
 
-                    $this->quiz['locked'] = !empty($this->input->post('locked'));
-
                     if ($this->quizzes->set($this->id, $this->quiz)) {
                         zl_success('Quiz has been successfully configured');
                         redirect(site_url('quiz/configure').'?id='.urlencode($this->id));
@@ -367,7 +462,6 @@ class Quiz extends CI_Controller {
                 $this->quiz['mc_score_correct'] = set_value('mc_score_correct');
                 $this->quiz['mc_score_incorrect'] = set_value('mc_score_incorrect');
                 $this->quiz['mc_score_empty'] = set_value('mc_score_empty');
-                $this->quiz['locked'] = !empty(set_value('locked'));
             }
         }
 

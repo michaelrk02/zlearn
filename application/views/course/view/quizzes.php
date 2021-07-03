@@ -53,6 +53,9 @@
                     <a class="card-link btn btn-secondary" href="<?php echo site_url('quiz/edit').'?id='.urlencode($quiz['quiz_id']); ?>">Edit <span class="fa fa-edit ms-2"></span></a>
                     <a class="card-link btn btn-secondary" href="<?php echo site_url('quiz/configure').'?id='.urlencode($quiz['quiz_id']); ?>">Configure <span class="fa fa-cog ms-2"></span></a>
                 <?php endif; ?>
+                <?php if (($role === 'instructor') || !empty($quiz['show_leaderboard'])): ?>
+                    <a class="card-link btn btn-secondary" href="<?php echo site_url('quiz/grades').'?id='.urlencode($quiz['quiz_id']); ?>">Grades</a>
+                <?php endif; ?>
             </div>
         </div>
     <?php endforeach; ?>

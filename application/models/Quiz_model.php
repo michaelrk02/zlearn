@@ -53,6 +53,18 @@ class Quiz_model extends CI_Model {
 
     /*** Quiz responses ***/
 
+    public function list_responses($id, $columns = '*', $order_by_score = FALSE) {
+        $this->db->select($columns, FALSE)->from('quiz_responses');
+        $this->db->join('users', $this->db->dbprefix('quiz_responses').'.user_id = '.$this->db->dbprefix('users').'.user_id');
+        $this->db->where('quiz_id', $id);
+        if ($order_by_score) {
+            $this->db->order_by('score', 'DESC');
+        } else {
+            $this->db->order_by('name');
+        }
+        return $this->db->get()->result_array();
+    }
+
     public function init_response($id, $user_id, $essay, $num_questions, $timestamp) {
         if ($this->db->select('user_id')->from('quiz_responses')->where(['quiz_id' => $id, 'user_id' => $user_id])->count_all_results() == 0) {
             $response = [];
@@ -61,7 +73,6 @@ class Quiz_model extends CI_Model {
             $response['timestamp'] = $timestamp;
             $response['data'] = '';
             $response['score'] = 0;
-            $response['comment'] = '';
 
             if ($this->db->insert('quiz_responses', $response)) {
                 $response['data'] = $this->init_response_data($essay, $num_questions);
@@ -130,6 +141,27 @@ class Quiz_model extends CI_Model {
             }
         }
         return NULL;
+    }
+
+    public function autograde($id, $user_id) {
+        $quiz = $this->get($id, 'num_question');
+    }
+
+    public function calculate_grade($id, $user_id) {
+        $quiz = $this->get($id, 'num_questions');
+        if (isset($quiz)) {
+            $response = $this->get_response($id, $user_id);
+            if (isset($response)) {
+                $data = $response['data'];
+
+                $score = 0;
+                for ($i = 1; $i <= $quiz['num_questions']; $i++) {
+                    $score = $score + $data[$i][1];
+                }
+                return $this->set_response_info($id, $user_id, ['score' => $score]);
+            }
+        }
+        return FALSE;
     }
 
     /*** Utilities ***/

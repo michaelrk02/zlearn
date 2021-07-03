@@ -95,14 +95,16 @@ class Course extends CI_Controller {
 
             $data['id'] = $this->id;
             $data['role'] = $this->role;
-            $data['quizzes'] = $this->courses->list_quizzes($this->id, 'quiz_id, title, duration, num_questions, essay, locked', $filter, ($page - 1) * $display, $display);
+            $data['quizzes'] = $this->courses->list_quizzes($this->id, 'quiz_id, title, duration, num_questions, essay, show_leaderboard, locked', $filter, ($page - 1) * $display, $display);
             $data['filter'] = $filter;
             $data['page'] = $page;
             $data['max_page'] = $max_page;
             $data['display'] = $display;
         } elseif ($tab === 'members') {
+            $this->load->database();
+
             $data['id'] = $this->id;
-            $data['members'] = $this->courses->list_course_members($this->id, ZL_DB_PREFIX.'course_members.user_id AS user_id, name, instructor');
+            $data['members'] = $this->courses->list_course_members($this->id, $this->db->dbprefix('course_members').'.user_id AS user_id, name, instructor');
             $data['allow_course_management'] = $this->auth->user['allow_course_management'];
         }
 

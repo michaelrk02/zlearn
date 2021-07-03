@@ -28,6 +28,10 @@ function zl_success($message) {
     zl_session_set('status', ['severity' => 'success', 'message' => $message]);
 }
 
+function zl_warning($message) {
+    zl_session_set('status', ['severity' => 'warning', 'message' => $message]);
+}
+
 function zl_error($message) {
     zl_session_set('status', ['severity' => 'error', 'message' => $message]);
 }

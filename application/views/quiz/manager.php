@@ -61,11 +61,18 @@
     </div>
     <div class="my-3">
         <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="essay" value="1" <?php echo !empty($quiz['show_leaderboard']) ? 'checked' : ''; ?>>
+            <input class="form-check-input" type="checkbox" name="show_leaderboard" value="1" <?php echo !empty($quiz['show_leaderboard']) ? 'checked' : ''; ?>>
             <label class="form-check-label">Show leaderboard</label>
         </div>
         <div class="form-text">Whether to enable leaderboard feature (display rank and other participants' grades)</div>
     </div>
+        <div class="my-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="locked" value="1" <?php echo !empty($quiz['locked']) ? 'checked' : ''; ?>>
+                <label class="form-check-label">Locked</label>
+            </div>
+            <div class="form-text">Whether the quiz is locked for attempts</div>
+        </div>
     <div class="my-3">
         <button class="btn btn-success" type="submit" name="submit" value="1">Submit <span class="fa fa-paper-plane ms-2"></span></button>
         <?php if ($action === 'edit'): ?>

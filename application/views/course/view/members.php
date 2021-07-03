@@ -2,7 +2,7 @@
     <?php if ($role === 'instructor'): ?>
         <div class="card my-3">
             <div class="card-body">
-                <p>To add members, share these information below</p>
+                <p>To add members, share these informations below</p>
                 <div><b>Course ID:</b> <code><?php echo $id; ?></code></div>
                 <div><b>Course password:</b> <i>course password that has been set</i></div>
             </div>

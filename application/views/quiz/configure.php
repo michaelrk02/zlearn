@@ -37,13 +37,6 @@ $choices = ['-- N/A --', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
             <?php endfor; ?>
         </div>
         <div class="my-3">
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="locked" value="1" <?php echo !empty($quiz['locked']) ? 'checked' : ''; ?>>
-                <label class="form-check-label">Locked</label>
-            </div>
-            <div class="form-text">Whether the quiz is locked for attempts</div>
-        </div>
-        <div class="my-3">
             <button type="submit" class="btn btn-success" name="submit" value="1">Apply <span class="fa fa-save ms-2"></span></button>
         </div>
     </form>
