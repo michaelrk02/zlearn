@@ -3,6 +3,9 @@
 <p><b>Quiz:</b> <a href="<?php echo site_url('quiz/view').'?id='.urlencode($id); ?>"><?php echo htmlspecialchars($quiz['title']); ?></a></p>
 <div class="mb-2">
     <?php if ($role === 'instructor'): ?>
+        <?php if (empty($quiz['essay'])): ?>
+            <a class="mx-1" href="<?php echo site_url('quiz/autograde_all').'?id='.urlencode($id); ?>">Perform autograding</a>
+        <?php endif; ?>
         <a class="mx-1" href="<?php echo site_url('quiz/grade_calculate').'?id='.urlencode($id); ?>">Calculate all grades</a>
     <?php endif; ?>
 </div>
