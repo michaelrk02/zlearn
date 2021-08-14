@@ -153,5 +153,28 @@ class Course_model extends CI_Model {
         return $this->db->get()->result_array();
     }
 
+    /*** Course grades ***/
+
+    public function list_grades($id, $user_id = NULL) {
+        if (isset($user_id)) {
+            $this->db->select('course_id, '.$this->db->dbprefix('quizzes').'.quiz_id AS quiz_id, '.$this->db->dbprefix('quizzes').'.title AS quiz_title, score', FALSE);
+        } else {
+            $this->db->select('course_id, '.$this->db->dbprefix('quiz_responses').'.user_id AS user_id, name, SUM(score) AS score', FALSE);
+        }
+        $this->db->from('quiz_responses');
+        $this->db->join('quizzes', $this->db->dbprefix('quiz_responses').'.quiz_id = '.$this->db->dbprefix('quizzes').'.quiz_id');
+        if (isset($user_id)) {
+            $this->db->where('user_id', $user_id);
+            $this->db->where('course_id', $id);
+            $this->db->where('show_grades', 1);
+        } else {
+            $this->db->join('users', $this->db->dbprefix('quiz_responses').'.user_id = '.$this->db->dbprefix('users').'.user_id');
+            $this->db->group_by('user_id');
+            $this->db->having('course_id', $id);
+            $this->db->order_by('score', 'DESC');
+        }
+        return $this->db->get()->result_array();
+    }
+
 }
 

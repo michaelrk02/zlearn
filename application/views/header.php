@@ -5,8 +5,6 @@ $menuitems = [];
 if (zl_is_logged_in()) {
     $menuitems[] = ['Dashboard', 'dashboard'];
     $menuitems[] = ['My Courses', 'course/listing'];
-    $menuitems[] = ['My Quizzes', 'quiz/listing'];
-    $menuitems[] = ['My Grades', 'quiz/grades'];
 }
 
 ?>

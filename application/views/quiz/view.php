@@ -37,6 +37,9 @@
 <?php if (($role === 'participant') && empty($quiz['locked']) && isset($attempt)): ?>
     <h3>Last Attempt</h3>
     <div class="my-1">Started on <span id="timestamp"><?php echo $attempt['timestamp']; ?></span></div>
+    <?php if (!empty($quiz['show_grades'])): ?>
+        <div class="my-1">Your grade: <b><?php echo $attempt['score']; ?></b></div>
+    <?php endif; ?>
 <?php endif; ?>
 <div class="my-3">
     <?php if (($role === 'participant') && empty($quiz['locked'])): ?>

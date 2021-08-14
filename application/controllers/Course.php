@@ -100,6 +100,17 @@ class Course extends CI_Controller {
             $data['page'] = $page;
             $data['max_page'] = $max_page;
             $data['display'] = $display;
+        } elseif ($tab === 'grades') {
+            $data['role'] = $this->role;
+            if ($this->role === 'instructor') {
+                $data['grades'] = $this->courses->list_grades($this->id);
+            } else {
+                $data['grades'] = $this->courses->list_grades($this->id, $this->user_id);
+                $data['grade_total'] = 0;
+                foreach ($data['grades'] as $grade) {
+                    $data['grade_total'] += $grade['score'];
+                }
+            }
         } elseif ($tab === 'members') {
             $this->load->database();
 
