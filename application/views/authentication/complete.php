@@ -6,7 +6,7 @@
         <div class="card-body bg-light">
             <?php echo zl_status(); ?>
             <p>Complete your profile by providing your full name and your e-mail address</p>
-            <?php echo form_open('authentication/complete'); ?>
+            <?php echo form_open('authentication/complete', 'onsubmit="return confirm(\'Are you sure?\')"'); ?>
                 <div class="my-3">
                     <div class="input-group">
                         <span class="input-group-text"><span class="fa fa-pen"></span></span>

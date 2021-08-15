@@ -1,6 +1,8 @@
 <?php if ($action === 'create'): ?>
+    <div class="my-3"><a href="<?php echo site_url('course/view').'?id='.urlencode($course['course_id']).'&tab=quizzes'; ?>"><span class="fa fa-arrow-circle-left me-2"></span> Back to quizzes on "<?php echo htmlspecialchars($course['title']); ?>"</a></div>
     <h1>Create New Quiz</h1>
 <?php else: ?>
+    <div class="my-3"><a href="<?php echo site_url('quiz/view').'?id='.urlencode($id).'&tab=quizzes'; ?>"><span class="fa fa-arrow-circle-left me-2"></span> Back to "<?php echo htmlspecialchars($quiz['title']); ?>" quiz</a></div>
     <h1>Edit Quiz<h1>
     <h5><?php echo $quiz['title']; ?></h5>
 <?php endif; ?>

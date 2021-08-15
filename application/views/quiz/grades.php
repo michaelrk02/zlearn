@@ -1,3 +1,4 @@
+<div class="my-3"><a href="<?php echo site_url('quiz/view').'?id='.urlencode($id).'&tab=quizzes'; ?>"><span class="fa fa-arrow-circle-left me-2"></span> Back to "<?php echo htmlspecialchars($quiz['title']); ?>" quiz</a></div>
 <h1>Quiz Grades</h1>
 <p><b>Course:</b> <a href="<?php echo site_url('course/view').'?id='.urlencode($quiz['course_id']); ?>"><?php echo htmlspecialchars($course['title']); ?></a></p>
 <p><b>Quiz:</b> <a href="<?php echo site_url('quiz/view').'?id='.urlencode($id); ?>"><?php echo htmlspecialchars($quiz['title']); ?></a></p>

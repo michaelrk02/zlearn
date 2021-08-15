@@ -1,3 +1,24 @@
+<?php if ($role === 'instructor'): ?>
+    <div class="p-3">
+        <div class="card bg-light">
+            <div class="card-body">
+                <form method="get">
+                    <input type="hidden" name="id" value="<?php echo htmlspecialchars($_GET['id']); ?>">
+                    <input type="hidden" name="tab" value="grades">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="order" value="user_name" <?php echo $_GET['order'] === 'user_name' ? 'checked' : ''; ?>>
+                        <label class="form-check-label">Sort by user name</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="order" value="grade" <?php echo $_GET['order'] === 'grade' ? 'checked' : ''; ?>>
+                        <label class="form-check-label">Sort by grade</label>
+                    </div>
+                    <div class="mt-3"><button type="submit" class="btn btn-primary">Apply</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
 <div class="p-3">
     <div class="table-responsive">
         <table class="table table-striped">

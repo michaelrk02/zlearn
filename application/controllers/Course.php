@@ -101,9 +101,11 @@ class Course extends CI_Controller {
             $data['max_page'] = $max_page;
             $data['display'] = $display;
         } elseif ($tab === 'grades') {
+            $_GET['order'] = !empty($_GET['order']) ? $_GET['order'] : 'user_name';
+
             $data['role'] = $this->role;
             if ($this->role === 'instructor') {
-                $data['grades'] = $this->courses->list_grades($this->id);
+                $data['grades'] = $this->courses->list_grades($this->id, NULL, $_GET['order'] === 'grade');
             } else {
                 $data['grades'] = $this->courses->list_grades($this->id, $this->user_id);
                 $data['grade_total'] = 0;
@@ -139,7 +141,7 @@ class Course extends CI_Controller {
             $course = $this->courses->get($course_id, 'password, title');
             if (isset($course) && password_verify($password, $course['password'])) {
                 if ($this->courses->get_role($course_id, $this->user_id) === NULL) {
-                    if ($this->courses->add_member($course_id, $this->user_id, FALSE)) {
+                    if ($this->courses->add_member($course_id, $this->user_id, $this->courses->count_course_members($course_id) == 0)) {
                         zl_success('Successfully registered for <b>'.$course['title'].'</b> course!');
                         redirect(site_url('course/view').'?id='.urlencode($course_id));
                     } else {

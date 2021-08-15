@@ -1,6 +1,7 @@
 <?php
 $choices = ['-- N/A --', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 ?>
+<div class="my-3"><a href="<?php echo site_url('quiz/view').'?id='.urlencode($id).'&tab=quizzes'; ?>"><span class="fa fa-arrow-circle-left me-2"></span> Back to "<?php echo htmlspecialchars($quiz['title']); ?>" quiz</a></div>
 <h1>Configure Quiz</h1>
 <h3><?php echo $quiz['title']; ?></h3>
 <p>Course: <a href="<?php echo site_url('course/view').'?id='.urlencode($quiz['course_id']); ?>"><?php echo htmlspecialchars($course['title']); ?></a></p>

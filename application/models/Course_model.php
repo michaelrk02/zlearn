@@ -33,7 +33,7 @@ class Course_model extends CI_Model {
         $this->load->model('quiz_model', 'quizzes');
 
         $this->db->where('course_id', $id)->delete('course_members');
-        $this->db->where('course_id', $id)->delete('course_materials');
+        $this->db->where('course_id', $id)->delete('materials');
 
         $quizzes = $this->db->select('quiz_id')->from('quizzes')->where('course_id', $id)->get()->result_array();
         foreach ($quizzes as $quiz) {
@@ -155,7 +155,7 @@ class Course_model extends CI_Model {
 
     /*** Course grades ***/
 
-    public function list_grades($id, $user_id = NULL) {
+    public function list_grades($id, $user_id = NULL, $sort_by_grade = FALSE) {
         if (isset($user_id)) {
             $this->db->select('course_id, '.$this->db->dbprefix('quizzes').'.quiz_id AS quiz_id, '.$this->db->dbprefix('quizzes').'.title AS quiz_title, score', FALSE);
         } else {
@@ -167,11 +167,16 @@ class Course_model extends CI_Model {
             $this->db->where('user_id', $user_id);
             $this->db->where('course_id', $id);
             $this->db->where('show_grades', 1);
+            $this->db->order_by('title', 'ASC');
         } else {
             $this->db->join('users', $this->db->dbprefix('quiz_responses').'.user_id = '.$this->db->dbprefix('users').'.user_id');
             $this->db->group_by('user_id');
             $this->db->having('course_id', $id);
-            $this->db->order_by('score', 'DESC');
+            if ($sort_by_grade) {
+                $this->db->order_by('score', 'DESC');
+            } else {
+                $this->db->order_by('name', 'ASC');
+            }
         }
         return $this->db->get()->result_array();
     }

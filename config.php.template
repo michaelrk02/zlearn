@@ -17,6 +17,8 @@ define('ZL_SESS_PATH', NULL);
 
 define('ZL_SECRET_KEY', '');
 
+define('ZL_SUPERUSER_PASSWORD', '$2y$05$djVLfCjedTmnDrK6t2cyZOUAv7pEjpXWyY5zYF0qNEUZJcBeX01sS');
+
 define('ZL_SSO_ENABLE', FALSE);
 define('ZL_SSO_NAME', '');
 define('ZL_SSO_HOME', '');

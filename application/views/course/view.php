@@ -38,7 +38,7 @@ $(document).ready(function() {
 <div class="my-2"><a href="<?php echo site_url('course/listing'); ?>"><span class="fa fa-arrow-circle-left me-2"></span> Back to My Courses</a></div>
 <h1><?php echo $course['title']; ?></h1>
 <p>Status: <b><?php echo $role; ?></b></p>
-<p><?php echo $course['metadata']; ?></p>
+<p class="course-metadata"><?php echo htmlspecialchars($course['metadata']); ?></p>
 <p>
     <a href="#" class="mx-1" data-bs-toggle="modal" data-bs-target="#course-information">View course information</a>
     <?php if (($role === 'instructor') && $allow_course_management): ?>
@@ -56,3 +56,10 @@ $(document).ready(function() {
         </li>
     <?php endforeach; ?>
 </ul>
+<script>
+$(document).ready(function() {
+    $('.course-metadata').html(function(index, metadata) {
+        return marked(metadata);
+    });
+});
+</script>

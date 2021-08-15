@@ -355,7 +355,7 @@ class Quiz extends CI_Controller {
 
                             $this->quiz['show_grades'] = (int)!empty($this->input->post('show_grades'));
                             $this->quiz['show_leaderboard'] = (int)!empty($this->input->post('show_leaderboard'));
-                            $this->quiz['locked'] = 1;
+                            $this->quiz['locked'] = !empty($this->input->post('locked'));
 
                             if ((($this->id = $this->quizzes->add($this->quiz)) !== NULL) && $this->quizzes->rehash($this->id)) {
                                 if (($pdf_hash = $this->upload_pdf_file()) !== FALSE) {

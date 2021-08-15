@@ -165,7 +165,7 @@ class Authentication extends CI_Controller {
                 if ($this->users->add($user)) {
                     zl_session_set('incomplete', NULL);
                     zl_session_set('tmp_name', NULL);
-                    zl_session_Set('tmp_email', NULL);
+                    zl_session_set('tmp_email', NULL);
                     zl_session_set('name', $user['name']);
                     zl_success('Successfully completed user account setup');
                     redirect('dashboard');

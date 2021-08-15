@@ -6,7 +6,7 @@
         <div class="card-body bg-light">
             <?php echo zl_status(); ?>
             <p>Fill the registration form below</p>
-            <?php echo form_open('authentication/register'); ?>
+            <?php echo form_open('authentication/register', 'onsubmit="return confirm(\'Are you sure?\')"'); ?>
                 <div class="my-3">
                     <div class="input-group">
                         <span class="input-group-text"><span class="fa fa-user"></span></span>
