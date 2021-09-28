@@ -55,7 +55,11 @@ class Course_model extends CI_Model {
     }
 
     public function remove_member($course_id, $user_id) {
-        return $this->db->where(['course_id' => $course_id, 'user_id' => $user_id])->delete('course_members') !== FALSE;
+        $subquery = $this->db->select('quiz_id')->from('quizzes')->where('course_id', $course_id)->get_compiled_select();
+        $this->db->where('user_id', $user_id)->where('`quiz_id` IN ('.$subquery.')', NULL, FALSE)->delete('quiz_responses');
+        $this->db->where(['course_id' => $course_id, 'user_id' => $user_id])->delete('course_members');
+
+        return TRUE;
     }
 
     public function list_course_members($course_id, $columns = '*', $offset = 0, $limit = NULL) {

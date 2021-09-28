@@ -314,6 +314,16 @@ class Course extends CI_Controller {
         $this->ensure_management();
         $this->init_course('title');
         $this->ensure_role('instructor');
+
+        $user_id = $this->input->get('user_id');
+        if (!empty($user_id)) {
+            if ($this->courses->remove_member($this->id, $user_id)) {
+                zl_success('Successfully removed <b>'.htmlspecialchars($user_id).'</b> from <b>'.htmlspecialchars($this->course['title']).'</b>');
+            } else {
+                zl_error('Failed to leave this course');
+            }
+        }
+        redirect(site_url('course/view').'?id='.urlencode($this->id).'&tab=members');
     }
 
     protected function init_course($columns = '*') {

@@ -595,7 +595,7 @@ class Quiz extends CI_Controller {
 
     protected function init_quiz_manager(&$form_validation) {
         $form_validation->set_rules('title', 'Title', 'required|max_length[100]');
-        $form_validation->set_rules('description', 'Description', 'required|max_length[1000]');
+        $form_validation->set_rules('description', 'Description', 'max_length[1000]');
         $form_validation->set_rules('duration', 'Duration', 'required|is_natural');
         $form_validation->set_rules('num_questions', 'Number of questions', 'required|is_natural_no_zero');
         $form_validation->set_rules('mc_num_choices', 'Number of multiple choices', 'required|integer|greater_than_equal_to[2]|less_than_equal_to[10]');

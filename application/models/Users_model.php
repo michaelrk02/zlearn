@@ -21,9 +21,7 @@ class Users_model extends CI_Model {
     }
 
     public function remove($id) {
-        $this->db->where('user_id', $id)->delete('grades');
-        $this->db->where('user_id', $id)->delete('quiz_mc_responses');
-        $this->db->where('user_id', $id)->delete('quiz_essay_responses');
+        $this->db->where('user_id', $id)->delete('quiz_responses');
         $this->db->where('user_id', $id)->delete('course_members');
 
         return $this->db->where('user_id', $id)->delete('users') !== FALSE;
