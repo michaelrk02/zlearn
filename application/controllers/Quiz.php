@@ -428,9 +428,10 @@ class Quiz extends CI_Controller {
                 $this->quiz['show_leaderboard'] = !empty($this->input->post('show_leaderboard'));
                 $this->quiz['locked'] = !empty($this->input->post('locked'));
 
-                $reset_answers = ($this->quiz['num_questions'] != $num_questions) || (!empty($this->quiz['essay']) === !$essay) || (empty($this->quiz['essay']) && ($this->quiz['mc_num_choices'] != $mc_num_choices)) ? $this->quizzes->update_response_data($this->id, !empty($this->quiz['essay']), $this->quiz['num_questions']) : TRUE;
+                $reset_answers_check = ($this->quiz['num_questions'] != $num_questions) || (!empty($this->quiz['essay']) === !$essay) || (empty($this->quiz['essay']) && ($this->quiz['mc_num_choices'] != $mc_num_choices));
+                $reset_answers = $reset_answers_check ? $this->quizzes->update_response_data($this->id, !empty($this->quiz['essay']), $this->quiz['num_questions']) : TRUE;
 
-                if ($reset_answers) {
+                if ($reset_answers_check) {
                     $this->quiz['mc_answers'] = unserialize($this->quiz['mc_answers']);
                     for ($i = 1; $i <= $this->quiz['num_questions']; $i++) {
                         $this->quiz['mc_answers'][$i] = 0;
