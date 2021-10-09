@@ -173,9 +173,9 @@ class Course_model extends CI_Model {
             $this->db->where('show_grades', 1);
             $this->db->order_by('title', 'ASC');
         } else {
+            $this->db->where('course_id', $id);
             $this->db->join('users', $this->db->dbprefix('quiz_responses').'.user_id = '.$this->db->dbprefix('users').'.user_id');
             $this->db->group_by('user_id');
-            $this->db->having('course_id', $id);
             if ($sort_by_grade) {
                 $this->db->order_by('score', 'DESC');
             } else {
